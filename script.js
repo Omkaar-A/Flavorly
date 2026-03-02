@@ -242,14 +242,18 @@ async function generateRecipeWithAI(ingredients, dishType, healthStatus, dietary
 }
 
 function createRecipePrompt(ingredients, dishType, healthStatus, dietary, cuisine, flavors) {
+    const hasIngredients = ingredients && ingredients.length > 0 && ingredients[0] !== '';
+    
     return `Create a detailed recipe based on these preferences:
 
-Ingredients available: ${ingredients.join(', ')}
+${hasIngredients ? `Ingredients available: ${ingredients.join(', ')}` : 'No specific ingredients provided - suggest common ingredients'}
 Dish type requested: ${dishType || 'Any'}
 Health status: ${healthStatus}
 Dietary restrictions: ${dietary || 'None'}
 Cuisine preference: ${cuisine || 'Any'}
 Flavor preferences: ${flavors.length > 0 ? flavors.join(', ') : 'None'}
+
+${!hasIngredients ? 'Please suggest a complete ingredient list for this recipe.' : 'Use the provided ingredients and suggest additional ones if needed.'}
 
 Please respond with a JSON object in this exact format:
 {
@@ -262,7 +266,7 @@ Please respond with a JSON object in this exact format:
     "tips": "Optional cooking tips"
 }
 
-Make sure the recipe is practical, uses the available ingredients, and matches all preferences exactly.`;
+Make sure the recipe is practical, matches all preferences exactly, and provides clear cooking instructions.`;
 }
 
 async function callClaudeAPI(config, prompt) {
@@ -365,7 +369,8 @@ function parseAIResponse(response, aiModel) {
 document.getElementById('recipe-form').addEventListener('submit', async function(e) {
     e.preventDefault();
     
-    const ingredients = document.getElementById('ingredients').value.toLowerCase().split(',').map(i => i.trim()).filter(i => i);
+    const ingredientsInput = document.getElementById('ingredients').value;
+    const ingredients = ingredientsInput ? ingredientsInput.toLowerCase().split(',').map(i => i.trim()).filter(i => i) : [];
     const dishType = document.getElementById('dish-type').value.toLowerCase();
     const healthStatus = document.querySelector('input[name="health-status"]:checked').value;
     const aiModel = document.getElementById('ai-model').value;
