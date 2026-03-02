@@ -514,7 +514,7 @@ function showSettingsModal() {
     console.log('Current user email:', currentUser?.email);
     
     // Check if user is admin - you can modify this to match your email
-    const adminEmails = ['admin@flavorly.com', 'omkaar@example.com']; // Add your email here
+    const adminEmails = ['admin@flavorly.com', 'omkaar@example.com', 'omkaar.anand@gmail.com']; // Add your email here
     const isAdmin = currentUser && adminEmails.includes(currentUser.email);
     
     if (!isAdmin) {
