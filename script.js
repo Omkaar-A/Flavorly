@@ -510,11 +510,15 @@ function displayRecipe(recipe) {
 
 // Settings and API Key Management (Admin Only)
 function showSettingsModal() {
-    // Check if user is admin (you can modify this logic)
-    const isAdmin = currentUser && currentUser.email === 'admin@flavorly.com'; // Change to your email
+    // Debug: Show current user email
+    console.log('Current user email:', currentUser?.email);
+    
+    // Check if user is admin - you can modify this to match your email
+    const adminEmails = ['admin@flavorly.com', 'omkaar@example.com']; // Add your email here
+    const isAdmin = currentUser && adminEmails.includes(currentUser.email);
     
     if (!isAdmin) {
-        showNotification('Only administrators can access AI settings.', 'info');
+        showNotification(`Only administrators can access AI settings. Current email: ${currentUser?.email}`, 'info');
         return;
     }
     
