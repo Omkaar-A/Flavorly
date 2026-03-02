@@ -178,20 +178,20 @@ function showRecipeGenerator() {
     generator.scrollIntoView({ behavior: 'smooth' });
 }
 
-// AI Configuration
+// AI Configuration - Admin keys (only you need to set these)
 const AI_CONFIG = {
     claude: {
-        apiKey: '', // User will need to add their API key
+        apiKey: '', // Add your Claude API key here
         endpoint: 'https://api.anthropic.com/v1/messages',
         model: 'claude-3-haiku-20240307'
     },
     gemini: {
-        apiKey: '', // User will need to add their API key
+        apiKey: '', // Add your Gemini API key here
         endpoint: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent',
         model: 'gemini-pro'
     },
     chatgpt: {
-        apiKey: '', // User will need to add their API key
+        apiKey: '', // Add your ChatGPT API key here
         endpoint: 'https://api.openai.com/v1/chat/completions',
         model: 'gpt-3.5-turbo'
     }
@@ -200,12 +200,17 @@ const AI_CONFIG = {
 // Current AI model preference
 let currentAIModel = 'claude'; // Default to Claude
 
+// Check if API keys are configured
+function areApiKeysConfigured() {
+    return AI_CONFIG.claude.apiKey || AI_CONFIG.gemini.apiKey || AI_CONFIG.chatgpt.apiKey;
+}
+
 // AI Recipe Generation
 async function generateRecipeWithAI(ingredients, dishType, healthStatus, dietary, cuisine, flavors, aiModel) {
     const modelConfig = AI_CONFIG[aiModel];
     
     if (!modelConfig.apiKey) {
-        showNotification(`Please add your ${aiModel.toUpperCase()} API key in settings`, 'error');
+        showNotification(`${aiModel.charAt(0).toUpperCase() + aiModel.slice(1)} API key not configured. Contact admin to set up AI models.`, 'error');
         return null;
     }
 
@@ -231,7 +236,7 @@ async function generateRecipeWithAI(ingredients, dishType, healthStatus, dietary
         return parseAIResponse(response, aiModel);
     } catch (error) {
         console.error('AI API Error:', error);
-        showNotification('Failed to generate recipe. Please check your API key.', 'error');
+        showNotification('Failed to generate recipe. Please try again or contact admin.', 'error');
         return null;
     }
 }
@@ -496,17 +501,32 @@ function displayRecipe(recipe) {
     resultDiv.scrollIntoView({ behavior: 'smooth' });
 }
 
-// Settings and API Key Management
+// Settings and API Key Management (Admin Only)
 function showSettingsModal() {
+    // Check if user is admin (you can modify this logic)
+    const isAdmin = currentUser && currentUser.email === 'admin@flavorly.com'; // Change to your email
+    
+    if (!isAdmin) {
+        showNotification('Only administrators can access AI settings.', 'info');
+        return;
+    }
+    
     const modal = document.createElement('div');
     modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center';
     modal.innerHTML = `
         <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4">
             <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold text-gray-800">AI Settings</h2>
+                <h2 class="text-2xl font-bold text-gray-800">Admin AI Settings</h2>
                 <button onclick="closeSettingsModal()" class="text-gray-400 hover:text-gray-600">
                     <i class="fas fa-times text-xl"></i>
                 </button>
+            </div>
+            
+            <div class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <p class="text-sm text-blue-800">
+                    <i class="fas fa-info-circle mr-2"></i>
+                    These API keys will be used by all users. Keep them secure!
+                </p>
             </div>
             
             <div class="space-y-4">
@@ -538,10 +558,9 @@ function showSettingsModal() {
     document.body.appendChild(modal);
     
     // Load existing keys
-    const keys = JSON.parse(localStorage.getItem('aiApiKeys') || '{}');
-    document.getElementById('claudeApiKey').value = keys.claude || '';
-    document.getElementById('geminiApiKey').value = keys.gemini || '';
-    document.getElementById('chatgptApiKey').value = keys.chatgpt || '';
+    document.getElementById('claudeApiKey').value = AI_CONFIG.claude.apiKey || '';
+    document.getElementById('geminiApiKey').value = AI_CONFIG.gemini.apiKey || '';
+    document.getElementById('chatgptApiKey').value = AI_CONFIG.chatgpt.apiKey || '';
 }
 
 function closeSettingsModal() {
@@ -552,29 +571,12 @@ function closeSettingsModal() {
 }
 
 function saveApiKeys() {
-    const keys = {
-        claude: document.getElementById('claudeApiKey').value,
-        gemini: document.getElementById('geminiApiKey').value,
-        chatgpt: document.getElementById('chatgptApiKey').value
-    };
+    AI_CONFIG.claude.apiKey = document.getElementById('claudeApiKey').value;
+    AI_CONFIG.gemini.apiKey = document.getElementById('geminiApiKey').value;
+    AI_CONFIG.chatgpt.apiKey = document.getElementById('chatgptApiKey').value;
     
-    localStorage.setItem('aiApiKeys', JSON.stringify(keys));
-    
-    // Update AI_CONFIG
-    AI_CONFIG.claude.apiKey = keys.claude;
-    AI_CONFIG.gemini.apiKey = keys.gemini;
-    AI_CONFIG.chatgpt.apiKey = keys.chatgpt;
-    
-    showNotification('API keys saved successfully!', 'success');
+    showNotification('API keys saved successfully! All users can now use AI models.', 'success');
     closeSettingsModal();
-}
-
-// Load API keys on initialization
-function loadApiKeys() {
-    const keys = JSON.parse(localStorage.getItem('aiApiKeys') || '{}');
-    AI_CONFIG.claude.apiKey = keys.claude || '';
-    AI_CONFIG.gemini.apiKey = keys.gemini || '';
-    AI_CONFIG.chatgpt.apiKey = keys.chatgpt || '';
 }
 
 function displayNoRecipe() {
@@ -584,11 +586,14 @@ function displayNoRecipe() {
     contentDiv.innerHTML = `
         <div class="bg-yellow-50 border border-yellow-200 p-6 rounded-lg text-center">
             <i class="fas fa-search text-yellow-600 text-4xl mb-4"></i>
-            <h4 class="text-xl font-semibold text-gray-800 mb-2">No Perfect Match Found</h4>
+            <h4 class="text-xl font-semibold text-gray-800 mb-2">No Recipe Generated</h4>
             <p class="text-gray-600 mb-4">
-                We couldn't find a recipe that matches all your criteria. Try adjusting your preferences or ingredients.
+                ${!areApiKeysConfigured() ? 
+                    'AI models are not configured yet. Contact admin to set up API keys.' :
+                    'Failed to generate recipe. Please try again with different preferences.'
+                }
             </p>
-            <button onclick="generateNewRecipe()" class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors">
+            <button onclick="generateNewRecipe()" class="bg-orange-600 text-white px-6 py-2 rounded-lg hover:bg-orange-700 transition-colors">
                 Try Again
             </button>
         </div>
@@ -714,7 +719,6 @@ function toggleMobileMenu() {
 // Initialize page
 document.addEventListener('DOMContentLoaded', function() {
     initAuth(); // Initialize authentication system
-    loadApiKeys(); // Load API keys
     
     // Update navigation to include settings for non-logged-in users
     if (!currentUser) {
