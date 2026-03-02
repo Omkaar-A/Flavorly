@@ -1245,20 +1245,24 @@ document.addEventListener('DOMContentLoaded', function() {
     initAuth(); // Initialize authentication system
     checkPasswordReset(); // Check for password reset requests
     
-    // Add event listeners for navigation buttons
-    document.addEventListener('click', function(e) {
-        if (e.target.matches('button')) {
-            const buttonText = e.target.textContent.trim();
-            if (buttonText === 'Features') {
-                e.preventDefault();
-                document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });
-            } else if (buttonText === 'How it Works') {
-                e.preventDefault();
-                document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' });
-            } else if (buttonText === 'My Recipes' && currentUser) {
-                e.preventDefault();
-                showNotification('My Recipes feature coming soon!', 'info');
-            }
+    // Add specific event listeners for navigation buttons without onclick
+    document.querySelectorAll('button').forEach(button => {
+        const buttonText = button.textContent.trim();
+        
+        // Only add listeners for buttons without onclick attributes
+        if (!button.getAttribute('onclick')) {
+            button.addEventListener('click', function(e) {
+                if (buttonText === 'Features') {
+                    e.preventDefault();
+                    document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });
+                } else if (buttonText === 'How it Works') {
+                    e.preventDefault();
+                    document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' });
+                } else if (buttonText === 'My Recipes' && currentUser) {
+                    e.preventDefault();
+                    showNotification('My Recipes feature coming soon!', 'info');
+                }
+            });
         }
     });
     
