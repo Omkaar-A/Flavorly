@@ -1252,15 +1252,19 @@ document.addEventListener('DOMContentLoaded', function() {
         // Only add listeners for buttons without onclick attributes
         if (!button.getAttribute('onclick')) {
             button.addEventListener('click', function(e) {
-                if (buttonText === 'Features') {
+                // Handle navigation buttons (case-insensitive)
+                if (buttonText.toLowerCase() === 'features') {
                     e.preventDefault();
                     document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });
-                } else if (buttonText === 'How it Works') {
+                } else if (buttonText.toLowerCase() === 'how it works') {
                     e.preventDefault();
                     document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' });
-                } else if (buttonText === 'My Recipes' && currentUser) {
+                } else if (buttonText.toLowerCase() === 'my recipes' && currentUser) {
                     e.preventDefault();
                     showNotification('My Recipes feature coming soon!', 'info');
+                } else if (buttonText.toLowerCase() === 'get app') {
+                    e.preventDefault();
+                    showNotification('Mobile app coming soon! Sign up for updates.', 'info');
                 }
             });
         }
