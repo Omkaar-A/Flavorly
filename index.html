@@ -51,51 +51,192 @@
     </nav>
 
     <!-- Hero Section -->
-    <section class="gradient-bg text-white py-20">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center fade-in">
-            <h1 class="text-5xl font-bold mb-6">
-                AI-Powered Recipe Platform
-            </h1>
-            <p class="text-xl mb-8 max-w-3xl mx-auto">
-                Create personalized meals based on your tastes, dietary needs, and available ingredients. 
-                Instead of searching through endless recipes, Flavorly generates custom dishes instantly.
-            </p>
-            <div class="flex justify-center space-x-4">
-                <button onclick="showRecipeGenerator()" class="bg-white text-purple-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
-                    Start Cooking
-                </button>
-                <button class="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-purple-600 transition-colors">
-                    Learn More
-                </button>
+    <section class="relative overflow-hidden">
+        <div class="gradient-bg text-white py-32 relative">
+            <!-- Animated background elements -->
+            <div class="absolute inset-0 overflow-hidden">
+                <div class="absolute -top-10 -left-10 w-40 h-40 bg-white opacity-10 rounded-full animate-pulse"></div>
+                <div class="absolute top-20 right-20 w-60 h-60 bg-purple-300 opacity-20 rounded-full animate-bounce" style="animation-delay: 2s;"></div>
+                <div class="absolute bottom-10 left-1/4 w-32 h-32 bg-white opacity-15 rounded-full animate-pulse" style="animation-delay: 1s;"></div>
             </div>
+            
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+                <div class="fade-in">
+                    <div class="inline-flex items-center bg-white/20 backdrop-blur-sm rounded-full px-4 py-2 mb-6">
+                        <i class="fas fa-sparkles text-yellow-300 mr-2"></i>
+                        <span class="text-sm font-medium">AI-Powered • Personalized • Instant</span>
+                    </div>
+                    
+                    <h1 class="text-6xl font-bold mb-6 leading-tight">
+                        Stop Searching.
+                        <br>
+                        <span class="text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-pink-300">
+                            Start Creating.
+                        </span>
+                    </h1>
+                    
+                    <p class="text-xl mb-8 max-w-3xl mx-auto text-white/90 leading-relaxed">
+                        Transform your ingredients into extraordinary meals. Our AI understands your tastes, 
+                        dietary needs, and even how you're feeling to create the perfect recipe every single time.
+                    </p>
+                    
+                    <div class="flex flex-col sm:flex-row justify-center gap-4 mb-12">
+                        <button onclick="showRecipeGenerator()" class="bg-white text-purple-600 px-8 py-4 rounded-lg font-semibold hover:bg-gray-100 transition-all transform hover:scale-105 shadow-lg">
+                            <i class="fas fa-magic mr-2"></i>Create Your Recipe Now
+                        </button>
+                        <button class="border-2 border-white text-white px-8 py-4 rounded-lg font-semibold hover:bg-white hover:text-purple-600 transition-all transform hover:scale-105">
+                            <i class="fas fa-play-circle mr-2"></i>Watch How It Works
+                        </button>
+                    </div>
+                    
+                    <!-- Trust indicators -->
+                    <div class="flex justify-center space-x-8 text-white/80">
+                        <div class="text-center">
+                            <div class="text-3xl font-bold text-white">50K+</div>
+                            <div class="text-sm">Happy Cooks</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-3xl font-bold text-white">1M+</div>
+                            <div class="text-sm">Recipes Created</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-3xl font-bold text-white">4.9★</div>
+                            <div class="text-sm">User Rating</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Wave animation at bottom -->
+        <div class="absolute bottom-0 left-0 right-0">
+            <svg viewBox="0 0 1440 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M0 120L60 110C120 100 240 80 360 70C480 60 600 60 720 65C840 70 960 80 1080 85C1200 90 1320 90 1380 90L1440 90V120H1380C1320 120 1200 120 1080 120C960 120 840 120 720 120C600 120 480 120 360 120C240 120 120 120 60 120H0V120Z" fill="#F9FAFB"/>
+            </svg>
         </div>
     </section>
 
     <!-- Features Section -->
-    <section class="py-20">
+    <section class="py-20 bg-gradient-to-b from-gray-50 to-white">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 class="text-4xl font-bold text-center text-gray-800 mb-12">Why Choose Flavorly?</h2>
+            <div class="text-center mb-16">
+                <div class="inline-flex items-center bg-purple-100 text-purple-800 rounded-full px-4 py-2 mb-4">
+                    <i class="fas fa-star mr-2"></i>
+                    <span class="text-sm font-semibold">Features</span>
+                </div>
+                <h2 class="text-5xl font-bold text-gray-800 mb-6">Why Flavorly is a <span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">Game-Changer</span></h2>
+                <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                    Experience the future of cooking with our revolutionary AI-powered recipe platform
+                </p>
+            </div>
+            
             <div class="grid md:grid-cols-3 gap-8">
-                <div class="bg-white p-8 rounded-xl shadow-lg card-hover">
-                    <div class="bg-purple-100 w-16 h-16 rounded-full flex items-center justify-center mb-6">
-                        <i class="fas fa-robot text-purple-600 text-2xl"></i>
+                <div class="bg-white p-8 rounded-2xl shadow-xl card-hover border border-gray-100">
+                    <div class="bg-gradient-to-r from-purple-500 to-purple-600 w-16 h-16 rounded-2xl flex items-center justify-center mb-6 transform rotate-3">
+                        <i class="fas fa-brain text-white text-2xl"></i>
                     </div>
-                    <h3 class="text-xl font-semibold mb-4">AI-Powered</h3>
-                    <p class="text-gray-600">Advanced algorithms understand your preferences and create perfect recipes every time.</p>
+                    <h3 class="text-2xl font-bold mb-4 text-gray-800">AI-Powered Magic</h3>
+                    <p class="text-gray-600 mb-4">Our advanced AI understands your preferences, learns from your choices, and creates recipes that feel personally crafted just for you.</p>
+                    <div class="flex items-center text-purple-600 font-semibold">
+                        <span>Smart Recommendations</span>
+                        <i class="fas fa-arrow-right ml-2"></i>
+                    </div>
                 </div>
-                <div class="bg-white p-8 rounded-xl shadow-lg card-hover">
-                    <div class="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mb-6">
-                        <i class="fas fa-leaf text-green-600 text-2xl"></i>
+                
+                <div class="bg-white p-8 rounded-2xl shadow-xl card-hover border border-gray-100">
+                    <div class="bg-gradient-to-r from-green-500 to-green-600 w-16 h-16 rounded-2xl flex items-center justify-center mb-6 transform -rotate-3">
+                        <i class="fas fa-heart text-white text-2xl"></i>
                     </div>
-                    <h3 class="text-xl font-semibold mb-4">Dietary Smart</h3>
-                    <p class="text-gray-600">Accommodates all dietary restrictions from vegan to gluten-free with intelligent substitutions.</p>
+                    <h3 class="text-2xl font-bold mb-4 text-gray-800">Health-Aware</h3>
+                    <p class="text-gray-600 mb-4">Feeling sick? We've got you covered. Get healing recipes that match how you feel, from comfort foods to immune-boosting meals.</p>
+                    <div class="flex items-center text-green-600 font-semibold">
+                        <span>Personalized Care</span>
+                        <i class="fas fa-arrow-right ml-2"></i>
+                    </div>
                 </div>
-                <div class="bg-white p-8 rounded-xl shadow-lg card-hover">
-                    <div class="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mb-6">
-                        <i class="fas fa-clock text-blue-600 text-2xl"></i>
+                
+                <div class="bg-white p-8 rounded-2xl shadow-xl card-hover border border-gray-100">
+                    <div class="bg-gradient-to-r from-blue-500 to-blue-600 w-16 h-16 rounded-2xl flex items-center justify-center mb-6 transform rotate-3">
+                        <i class="fas fa-bolt text-white text-2xl"></i>
                     </div>
-                    <h3 class="text-xl font-semibold mb-4">Instant Results</h3>
-                    <p class="text-gray-600">Get personalized recipe suggestions in seconds, not hours of searching.</p>
+                    <h3 class="text-2xl font-bold mb-4 text-gray-800">Lightning Fast</h3>
+                    <p class="text-gray-600 mb-4">No more endless scrolling. Get perfect recipe suggestions in seconds, not hours. Spend less time searching, more time cooking.</p>
+                    <div class="flex items-center text-blue-600 font-semibold">
+                        <span>Instant Results</span>
+                        <i class="fas fa-arrow-right ml-2"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials Section -->
+    <section class="py-20 bg-gradient-to-r from-purple-50 to-pink-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <div class="inline-flex items-center bg-white text-purple-800 rounded-full px-4 py-2 mb-4 shadow-md">
+                    <i class="fas fa-heart mr-2"></i>
+                    <span class="text-sm font-semibold">Love from Our Users</span>
+                </div>
+                <h2 class="text-4xl font-bold text-gray-800 mb-6">People Are Obsessed with Flavorly</h2>
+                <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                    Join thousands of home cooks who've transformed their kitchen experience
+                </p>
+            </div>
+            
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="bg-white p-6 rounded-2xl shadow-lg">
+                    <div class="flex items-center mb-4">
+                        <img src="https://picsum.photos/seed/user1/50/50.jpg" alt="User" class="w-12 h-12 rounded-full mr-3">
+                        <div>
+                            <div class="font-semibold text-gray-800">Sarah Chen</div>
+                            <div class="text-sm text-gray-500">Home Cook</div>
+                        </div>
+                    </div>
+                    <div class="flex mb-3">
+                        <i class="fas fa-star text-yellow-400"></i>
+                        <i class="fas fa-star text-yellow-400"></i>
+                        <i class="fas fa-star text-yellow-400"></i>
+                        <i class="fas fa-star text-yellow-400"></i>
+                        <i class="fas fa-star text-yellow-400"></i>
+                    </div>
+                    <p class="text-gray-700">"Flavorly completely changed how I cook. I used to spend hours searching for recipes. Now I just tell it what I have and get perfect suggestions every time!"</p>
+                </div>
+                
+                <div class="bg-white p-6 rounded-2xl shadow-lg">
+                    <div class="flex items-center mb-4">
+                        <img src="https://picsum.photos/seed/user2/50/50.jpg" alt="User" class="w-12 h-12 rounded-full mr-3">
+                        <div>
+                            <div class="font-semibold text-gray-800">Mike Rodriguez</div>
+                            <div class="text-sm text-gray-500">Busy Dad</div>
+                        </div>
+                    </div>
+                    <div class="flex mb-3">
+                        <i class="fas fa-star text-yellow-400"></i>
+                        <i class="fas fa-star text-yellow-400"></i>
+                        <i class="fas fa-star text-yellow-400"></i>
+                        <i class="fas fa-star text-yellow-400"></i>
+                        <i class="fas fa-star text-yellow-400"></i>
+                    </div>
+                    <p class="text-gray-700">"The health-aware feature is incredible! When I'm sick, it suggests comforting recipes. When I'm healthy, it gives me nutritious meals. It's like having a personal nutritionist."</p>
+                </div>
+                
+                <div class="bg-white p-6 rounded-2xl shadow-lg">
+                    <div class="flex items-center mb-4">
+                        <img src="https://picsum.photos/seed/user3/50/50.jpg" alt="User" class="w-12 h-12 rounded-full mr-3">
+                        <div>
+                            <div class="font-semibold text-gray-800">Emma Thompson</div>
+                            <div class="text-sm text-gray-500">Food Blogger</div>
+                        </div>
+                    </div>
+                    <div class="flex mb-3">
+                        <i class="fas fa-star text-yellow-400"></i>
+                        <i class="fas fa-star text-yellow-400"></i>
+                        <i class="fas fa-star text-yellow-400"></i>
+                        <i class="fas fa-star text-yellow-400"></i>
+                        <i class="fas fa-star text-yellow-400"></i>
+                    </div>
+                    <p class="text-gray-700">"As a food blogger, I'm amazed by the creativity. The AI comes up with combinations I'd never think of, and they're always delicious. My followers love the recipes I share!"</p>
                 </div>
             </div>
         </div>
@@ -196,37 +337,113 @@
     </section>
 
     <!-- How It Works -->
-    <section class="py-20">
+    <section class="py-20 bg-white">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 class="text-4xl font-bold text-center text-gray-800 mb-12">How It Works</h2>
-            <div class="grid md:grid-cols-4 gap-8">
-                <div class="text-center">
-                    <div class="bg-purple-600 text-white w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 font-bold text-lg">
+            <div class="text-center mb-16">
+                <div class="inline-flex items-center bg-purple-100 text-purple-800 rounded-full px-4 py-2 mb-4">
+                    <i class="fas fa-cog mr-2"></i>
+                    <span class="text-sm font-semibold">How It Works</span>
+                </div>
+                <h2 class="text-5xl font-bold text-gray-800 mb-6">Your Perfect Recipe in <span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">4 Simple Steps</span></h2>
+                <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                    From ingredients to delicious meals in less time than it takes to decide what to eat
+                </p>
+            </div>
+            
+            <div class="grid md:grid-cols-4 gap-8 relative">
+                <!-- Connection line -->
+                <div class="absolute top-1/2 left-0 right-0 h-1 bg-gradient-to-r from-purple-200 to-pink-200 transform -translate-y-1/2 hidden md:block"></div>
+                
+                <div class="text-center relative group">
+                    <div class="bg-gradient-to-r from-purple-500 to-purple-600 text-white w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 text-2xl font-bold transform transition-all group-hover:scale-110 group-hover:rotate-6 shadow-lg">
                         1
                     </div>
-                    <h3 class="font-semibold mb-2">Input Ingredients</h3>
-                    <p class="text-gray-600 text-sm">Tell us what you have in your kitchen</p>
+                    <div class="bg-purple-50 p-6 rounded-2xl border-2 border-purple-100 transition-all group-hover:border-purple-300 group-hover:shadow-lg">
+                        <i class="fas fa-shopping-basket text-purple-600 text-3xl mb-4"></i>
+                        <h3 class="font-bold text-xl mb-3 text-gray-800">Tell Us What You Have</h3>
+                        <p class="text-gray-600">Input the ingredients sitting in your fridge. No more food waste!</p>
+                    </div>
                 </div>
-                <div class="text-center">
-                    <div class="bg-purple-600 text-white w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 font-bold text-lg">
+                
+                <div class="text-center relative group">
+                    <div class="bg-gradient-to-r from-pink-500 to-pink-600 text-white w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 text-2xl font-bold transform transition-all group-hover:scale-110 group-hover:rotate-6 shadow-lg">
                         2
                     </div>
-                    <h3 class="font-semibold mb-2">Set Preferences</h3>
-                    <p class="text-gray-600 text-sm">Choose dietary needs and flavor preferences</p>
+                    <div class="bg-pink-50 p-6 rounded-2xl border-2 border-pink-100 transition-all group-hover:border-pink-300 group-hover:shadow-lg">
+                        <i class="fas fa-sliders-h text-pink-600 text-3xl mb-4"></i>
+                        <h3 class="font-bold text-xl mb-3 text-gray-800">Set Your Preferences</h3>
+                        <p class="text-gray-600">Dietary needs, cuisine style, how you're feeling - we get it all.</p>
+                    </div>
                 </div>
-                <div class="text-center">
-                    <div class="bg-purple-600 text-white w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 font-bold text-lg">
+                
+                <div class="text-center relative group">
+                    <div class="bg-gradient-to-r from-purple-500 to-purple-600 text-white w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 text-2xl font-bold transform transition-all group-hover:scale-110 group-hover:rotate-6 shadow-lg">
                         3
                     </div>
-                    <h3 class="font-semibold mb-2">AI Magic</h3>
-                    <p class="text-gray-600 text-sm">Our AI creates the perfect recipe for you</p>
+                    <div class="bg-purple-50 p-6 rounded-2xl border-2 border-purple-100 transition-all group-hover:border-purple-300 group-hover:shadow-lg">
+                        <i class="fas fa-magic text-purple-600 text-3xl mb-4"></i>
+                        <h3 class="font-bold text-xl mb-3 text-gray-800">AI Works Its Magic</h3>
+                        <p class="text-gray-600">Our algorithm analyzes everything and creates the perfect recipe match.</p>
+                    </div>
                 </div>
-                <div class="text-center">
-                    <div class="bg-purple-600 text-white w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 font-bold text-lg">
+                
+                <div class="text-center relative group">
+                    <div class="bg-gradient-to-r from-pink-500 to-pink-600 text-white w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 text-2xl font-bold transform transition-all group-hover:scale-110 group-hover:rotate-6 shadow-lg">
                         4
                     </div>
-                    <h3 class="font-semibold mb-2">Cook & Enjoy</h3>
-                    <p class="text-gray-600 text-sm">Follow step-by-step instructions and enjoy</p>
+                    <div class="bg-pink-50 p-6 rounded-2xl border-2 border-pink-100 transition-all group-hover:border-pink-300 group-hover:shadow-lg">
+                        <i class="fas fa-utensils text-pink-600 text-3xl mb-4"></i>
+                        <h3 class="font-bold text-xl mb-3 text-gray-800">Cook & Enjoy</h3>
+                        <p class="text-gray-600">Follow step-by-step instructions and enjoy your perfect meal!</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-center mt-12">
+                <button onclick="showRecipeGenerator()" class="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-8 py-4 rounded-lg font-semibold hover:shadow-lg transition-all transform hover:scale-105">
+                    <i class="fas fa-rocket mr-2"></i>Try It Now - It's Free!
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Final CTA Section -->
+    <section class="py-20 bg-gradient-to-r from-purple-600 to-pink-600 text-white relative overflow-hidden">
+        <div class="absolute inset-0 overflow-hidden">
+            <div class="absolute top-10 right-10 w-32 h-32 bg-white opacity-10 rounded-full animate-pulse"></div>
+            <div class="absolute bottom-10 left-20 w-24 h-24 bg-white opacity-15 rounded-full animate-bounce" style="animation-delay: 1s;"></div>
+        </div>
+        
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+            <h2 class="text-4xl md:text-5xl font-bold mb-6">
+                Ready to Transform Your Cooking?
+            </h2>
+            <p class="text-xl mb-8 text-white/90">
+                Join thousands of happy cooks who've discovered the joy of personalized, AI-powered recipes. 
+                No more guesswork, no more food waste, just delicious meals every time.
+            </p>
+            
+            <div class="flex flex-col sm:flex-row justify-center gap-4 mb-8">
+                <button onclick="showRecipeGenerator()" class="bg-white text-purple-600 px-8 py-4 rounded-lg font-semibold hover:bg-gray-100 transition-all transform hover:scale-105 shadow-xl">
+                    <i class="fas fa-rocket mr-2"></i>Start Cooking Now - Free!
+                </button>
+                <button class="border-2 border-white text-white px-8 py-4 rounded-lg font-semibold hover:bg-white hover:text-purple-600 transition-all transform hover:scale-105">
+                    <i class="fas fa-mobile-alt mr-2"></i>Get the App
+                </button>
+            </div>
+            
+            <div class="flex justify-center items-center space-x-6 text-white/80">
+                <div class="flex items-center">
+                    <i class="fas fa-check-circle text-green-300 mr-2"></i>
+                    <span>No credit card required</span>
+                </div>
+                <div class="flex items-center">
+                    <i class="fas fa-check-circle text-green-300 mr-2"></i>
+                    <span>Setup in 30 seconds</span>
+                </div>
+                <div class="flex items-center">
+                    <i class="fas fa-check-circle text-green-300 mr-2"></i>
+                    <span>Cancel anytime</span>
                 </div>
             </div>
         </div>
