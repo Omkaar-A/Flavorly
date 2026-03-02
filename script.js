@@ -44,11 +44,11 @@ function updateUIForLoggedInUser() {
     const navButtons = document.querySelector('nav .flex.space-x-4');
     if (currentUser && navButtons) {
         navButtons.innerHTML = `
-            <button class="text-gray-600 hover:text-purple-600 transition-colors">Features</button>
-            <button class="text-gray-600 hover:text-purple-600 transition-colors">How it Works</button>
-            <button class="text-gray-600 hover:text-purple-600 transition-colors">My Recipes</button>
+            <button class="text-gray-600 hover:text-orange-600 transition-colors">Features</button>
+            <button class="text-gray-600 hover:text-orange-600 transition-colors">How it Works</button>
+            <button class="text-gray-600 hover:text-orange-600 transition-colors">My Recipes</button>
             <div class="relative group">
-                <button class="flex items-center text-gray-600 hover:text-purple-600 transition-colors">
+                <button class="flex items-center text-gray-600 hover:text-orange-600 transition-colors">
                     <i class="fas fa-user-circle mr-2"></i>${currentUser.name}
                     <i class="fas fa-chevron-down ml-1 text-xs"></i>
                 </button>
@@ -153,10 +153,10 @@ function logout() {
     const navButtons = document.querySelector('nav .flex.space-x-4');
     if (navButtons) {
         navButtons.innerHTML = `
-            <button class="text-gray-600 hover:text-purple-600 transition-colors">Features</button>
-            <button class="text-gray-600 hover:text-purple-600 transition-colors">How it Works</button>
-            <button onclick="showLoginModal()" class="text-gray-600 hover:text-purple-600 transition-colors">Log In</button>
-            <button onclick="showSignupModal()" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors">
+            <button class="text-gray-600 hover:text-orange-600 transition-colors">Features</button>
+            <button class="text-gray-600 hover:text-orange-600 transition-colors">How it Works</button>
+            <button onclick="showLoginModal()" class="text-gray-600 hover:text-orange-600 transition-colors">Log In</button>
+            <button onclick="showSignupModal()" class="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors">
                 Sign Up
             </button>
         `;
@@ -174,6 +174,26 @@ function showRecipeGenerator() {
 
 // Sample recipe database
 const recipeDatabase = [
+    {
+        name: "Fresh Lemonade",
+        ingredients: ["lemons", "sugar", "water"],
+        dishTypes: ["lemonade", "drink", "beverage", "refreshing"],
+        dietary: "vegan",
+        cuisine: "",
+        flavor: ["sweet", "tangy"],
+        time: "10 mins",
+        difficulty: "Easy",
+        healthStatus: "healthy",
+        description: "A refreshing homemade lemonade perfect for hot days. Simple, sweet, and tangy with real lemon flavor.",
+        instructions: [
+            "Roll lemons firmly on countertop to release juices",
+            "Cut lemons in half and squeeze juice into a pitcher",
+            "Add sugar and hot water, stir until sugar dissolves",
+            "Add cold water and ice cubes",
+            "Stir well and taste, adjust sweetness if needed",
+            "Serve chilled with lemon slices and mint"
+        ]
+    },
     {
         name: "Mediterranean Chicken Bowl",
         ingredients: ["chicken", "tomatoes", "rice"],
@@ -313,6 +333,46 @@ const recipeDatabase = [
             "Season with salt and pepper",
             "Top with fresh herbs if desired"
         ]
+    },
+    {
+        name: "Chocolate Chip Cookies",
+        ingredients: ["flour", "sugar", "chocolate"],
+        dishTypes: ["cookies", "dessert", "baking", "sweet"],
+        dietary: "vegetarian",
+        cuisine: "",
+        flavor: ["sweet"],
+        time: "25 mins",
+        difficulty: "Medium",
+        healthStatus: "healthy",
+        description: "Classic homemade chocolate chip cookies - crispy on the edges, chewy in the center.",
+        instructions: [
+            "Cream together butter and sugars until fluffy",
+            "Beat in eggs and vanilla extract",
+            "Mix in flour, baking soda, and salt",
+            "Fold in chocolate chips",
+            "Drop spoonfuls on baking sheet",
+            "Bake at 375°F for 10-12 minutes until golden"
+        ]
+    },
+    {
+        name: "Grilled Cheese Sandwich",
+        ingredients: ["bread", "cheese", "butter"],
+        dishTypes: ["sandwich", "grilled cheese", "comfort"],
+        dietary: "vegetarian",
+        cuisine: "american",
+        flavor: ["savory"],
+        time: "10 mins",
+        difficulty: "Easy",
+        healthStatus: "healthy",
+        description: "The ultimate comfort food - crispy golden bread with melted cheese inside.",
+        instructions: [
+            "Butter one side of each bread slice",
+            "Place cheese between bread slices, buttered sides out",
+            "Heat skillet over medium heat",
+            "Cook sandwich for 3-4 minutes per side",
+            "Press down gently with spatula",
+            "Serve hot when cheese is melted and bread is golden"
+        ]
     }
 ];
 
@@ -323,13 +383,14 @@ document.getElementById('recipe-form').addEventListener('submit', function(e) {
     const ingredients = document.getElementById('ingredients').value.toLowerCase().split(',').map(i => i.trim());
     const dishType = document.getElementById('dish-type').value.toLowerCase();
     const healthStatus = document.querySelector('input[name="health-status"]:checked').value;
+    const aiModel = document.getElementById('ai-model').value;
     const dietary = document.getElementById('dietary').value;
     const cuisine = document.getElementById('cuisine').value;
     const flavorCheckboxes = document.querySelectorAll('input[type="checkbox"]:checked');
     const flavors = Array.from(flavorCheckboxes).map(cb => cb.value);
     
     // Find matching recipe
-    const recipe = findBestRecipe(ingredients, dishType, healthStatus, dietary, cuisine, flavors);
+    const recipe = findBestRecipe(ingredients, dishType, healthStatus, dietary, cuisine, flavors, aiModel);
     
     if (recipe) {
         displayRecipe(recipe);
@@ -338,12 +399,38 @@ document.getElementById('recipe-form').addEventListener('submit', function(e) {
     }
 });
 
-function findBestRecipe(ingredients, dishType, healthStatus, dietary, cuisine, flavors) {
+function findBestRecipe(ingredients, dishType, healthStatus, dietary, cuisine, flavors, aiModel) {
     let bestMatch = null;
     let bestScore = 0;
     
     recipeDatabase.forEach(recipe => {
         let score = 0;
+        
+        // AI Model adjustments
+        switch(aiModel) {
+            case 'fast':
+                // Prioritize quick recipes
+                if (recipe.difficulty === 'Easy' && (recipe.time.includes('10') || recipe.time.includes('15'))) {
+                    score += 8;
+                }
+                break;
+            case 'creative':
+                // Prioritize unique combinations
+                if (recipe.dishTypes.includes('baking') || recipe.dishTypes.includes('dessert')) {
+                    score += 5;
+                }
+                break;
+            case 'healthy':
+                // Prioritize healthy recipes
+                if (recipe.dietary === 'vegan' || recipe.dietary === 'vegetarian') {
+                    score += 6;
+                }
+                break;
+            case 'smart':
+            default:
+                // Balanced approach - no extra bias
+                break;
+        }
         
         // Health status is most important - if sick, prioritize sick-friendly recipes
         if (healthStatus === 'sick' && recipe.healthStatus === 'sick') {
@@ -352,38 +439,68 @@ function findBestRecipe(ingredients, dishType, healthStatus, dietary, cuisine, f
             score += 5;
         }
         
-        // Check dish type match
+        // Dish type matching - much higher priority and smarter matching
         if (dishType) {
-            const matchingDishType = recipe.dishTypes.some(type => 
-                type.includes(dishType) || dishType.includes(type)
-            );
-            if (matchingDishType) {
+            const dishTypeLower = dishType.toLowerCase();
+            const recipeNameLower = recipe.name.toLowerCase();
+            
+            // Exact match in recipe name
+            if (recipeNameLower.includes(dishTypeLower) || dishTypeLower.includes(recipeNameLower)) {
+                score += 20;
+            }
+            // Match in dish types array
+            else if (recipe.dishTypes.some(type => 
+                type.toLowerCase().includes(dishTypeLower) || dishTypeLower.includes(type.toLowerCase())
+            )) {
+                score += 15;
+            }
+            // Partial match
+            else if (recipe.dishTypes.some(type => 
+                type.toLowerCase().split(' ').some(word => dishTypeLower.includes(word))
+            )) {
                 score += 8;
             }
         }
         
-        // Check ingredients match
-        const matchingIngredients = ingredients.filter(ing => 
-            recipe.ingredients.some(recipeIng => recipeIng.includes(ing) || ing.includes(recipeIng))
-        );
-        score += matchingIngredients.length * 3;
+        // Ingredients matching - smarter matching
+        const matchingIngredients = ingredients.filter(ing => {
+            const ingLower = ing.toLowerCase();
+            return recipe.ingredients.some(recipeIng => {
+                const recipeIngLower = recipeIng.toLowerCase();
+                return recipeIngLower.includes(ingLower) || ingLower.includes(recipeIngLower);
+            });
+        });
+        
+        // Score ingredients based on percentage matched
+        const ingredientMatchPercentage = matchingIngredients.length / Math.max(ingredients.length, recipe.ingredients.length);
+        score += ingredientMatchPercentage * 10;
+        
+        // Bonus for matching multiple ingredients
+        if (matchingIngredients.length >= 2) {
+            score += 5;
+        }
         
         // Check dietary preference
         if (dietary && recipe.dietary === dietary) {
-            score += 2;
+            score += 3;
         }
         
         // Check cuisine preference
         if (cuisine && recipe.cuisine === cuisine) {
-            score += 2;
+            score += 3;
         }
         
         // Check flavor preferences
         flavors.forEach(flavor => {
             if (recipe.flavor.includes(flavor)) {
-                score += 1;
+                score += 2;
             }
         });
+        
+        // Bonus for recipes that match multiple criteria
+        if (dishType && matchingIngredients.length > 0) {
+            score += 3;
+        }
         
         if (score > bestScore && score > 0) {
             bestScore = score;
