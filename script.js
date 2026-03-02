@@ -312,17 +312,20 @@ document.getElementById('loginForm').addEventListener('submit', function(e) {
     const email = document.getElementById('loginEmail').value;
     const password = document.getElementById('loginPassword').value;
     
+    console.log('=== LOGIN DEBUG ===');
     console.log('Login attempt:', { email, password });
     
     // Get users from localStorage
     const users = JSON.parse(localStorage.getItem('flavorlyUsers') || '[]');
     console.log('All users in storage:', users);
+    console.log('Number of users:', users.length);
     
     // Find user
     const user = users.find(u => u.email === email && u.password === password);
     console.log('Found user:', user);
     
     if (user) {
+        console.log('✅ Login successful!');
         currentUser = user;
         localStorage.setItem('flavorlyUser', JSON.stringify(user));
         updateUIForLoggedInUser();
@@ -332,12 +335,19 @@ document.getElementById('loginForm').addEventListener('submit', function(e) {
         // Reset form
         document.getElementById('loginForm').reset();
     } else {
-        console.log('Login failed. Checking for email match only...');
+        console.log('❌ Login failed. Checking for email match only...');
         const emailMatch = users.find(u => u.email === email);
         console.log('Email match found:', emailMatch);
         
-        showNotification('Invalid email or password. Check console for details.', 'error');
+        if (!emailMatch) {
+            console.log('❌ No user found with this email. You may need to sign up first.');
+            showNotification('No account found with this email. Please sign up first.', 'error');
+        } else {
+            console.log('❌ Email found but password incorrect.');
+            showNotification('Incorrect password. Try again or use "Forgot password".', 'error');
+        }
     }
+    console.log('=== END LOGIN DEBUG ===');
 });
 
 // Handle signup
