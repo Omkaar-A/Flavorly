@@ -47,6 +47,9 @@ function updateUIForLoggedInUser() {
             <button class="text-gray-600 hover:text-orange-600 transition-colors">Features</button>
             <button class="text-gray-600 hover:text-orange-600 transition-colors">How it Works</button>
             <button class="text-gray-600 hover:text-orange-600 transition-colors">My Recipes</button>
+            <button onclick="showSettingsModal()" class="text-gray-600 hover:text-orange-600 transition-colors">
+                <i class="fas fa-cog"></i>
+            </button>
             <div class="relative group">
                 <button class="flex items-center text-gray-600 hover:text-orange-600 transition-colors">
                     <i class="fas fa-user-circle mr-2"></i>${currentUser.name}
@@ -155,6 +158,9 @@ function logout() {
         navButtons.innerHTML = `
             <button class="text-gray-600 hover:text-orange-600 transition-colors">Features</button>
             <button class="text-gray-600 hover:text-orange-600 transition-colors">How it Works</button>
+            <button onclick="showSettingsModal()" class="text-gray-600 hover:text-orange-600 transition-colors">
+                <i class="fas fa-cog"></i>
+            </button>
             <button onclick="showLoginModal()" class="text-gray-600 hover:text-orange-600 transition-colors">Log In</button>
             <button onclick="showSignupModal()" class="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors">
                 Sign Up
@@ -172,215 +178,187 @@ function showRecipeGenerator() {
     generator.scrollIntoView({ behavior: 'smooth' });
 }
 
-// Sample recipe database
-const recipeDatabase = [
-    {
-        name: "Fresh Lemonade",
-        ingredients: ["lemons", "sugar", "water"],
-        dishTypes: ["lemonade", "drink", "beverage", "refreshing"],
-        dietary: "vegan",
-        cuisine: "",
-        flavor: ["sweet", "tangy"],
-        time: "10 mins",
-        difficulty: "Easy",
-        healthStatus: "healthy",
-        description: "A refreshing homemade lemonade perfect for hot days. Simple, sweet, and tangy with real lemon flavor.",
-        instructions: [
-            "Roll lemons firmly on countertop to release juices",
-            "Cut lemons in half and squeeze juice into a pitcher",
-            "Add sugar and hot water, stir until sugar dissolves",
-            "Add cold water and ice cubes",
-            "Stir well and taste, adjust sweetness if needed",
-            "Serve chilled with lemon slices and mint"
-        ]
+// AI Configuration
+const AI_CONFIG = {
+    claude: {
+        apiKey: '', // User will need to add their API key
+        endpoint: 'https://api.anthropic.com/v1/messages',
+        model: 'claude-3-haiku-20240307'
     },
-    {
-        name: "Mediterranean Chicken Bowl",
-        ingredients: ["chicken", "tomatoes", "rice"],
-        dishTypes: ["bowl", "chicken", "healthy"],
-        dietary: "",
-        cuisine: "mediterranean",
-        flavor: ["savory"],
-        time: "30 mins",
-        difficulty: "Easy",
-        healthStatus: "healthy",
-        description: "A healthy and flavorful Mediterranean-inspired bowl with grilled chicken, fresh vegetables, and aromatic rice.",
-        instructions: [
-            "Season chicken with olive oil, lemon juice, garlic, and herbs",
-            "Grill chicken for 6-8 minutes per side until cooked through",
-            "Cook rice according to package directions",
-            "Dice tomatoes and other vegetables",
-            "Assemble bowl with rice, chicken, and fresh vegetables",
-            "Drizzle with tahini dressing"
-        ]
+    gemini: {
+        apiKey: '', // User will need to add their API key
+        endpoint: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent',
+        model: 'gemini-pro'
     },
-    {
-        name: "Spicy Vegetable Stir-Fry",
-        ingredients: ["vegetables", "rice"],
-        dishTypes: ["stir-fry", "asian", "vegetables"],
-        dietary: "vegan",
-        cuisine: "asian",
-        flavor: ["spicy", "savory"],
-        time: "20 mins",
-        difficulty: "Easy",
-        healthStatus: "healthy",
-        description: "A quick and spicy Asian-inspired stir-fry packed with colorful vegetables and bold flavors.",
-        instructions: [
-            "Heat wok or large pan over high heat",
-            "Add vegetables and stir-fry for 3-4 minutes",
-            "Add soy sauce, ginger, garlic, and chili flakes",
-            "Toss everything together for 2 more minutes",
-            "Serve over steamed rice",
-            "Garnish with sesame seeds and green onions"
-        ]
-    },
-    {
-        name: "Classic Margherita Pizza",
-        ingredients: ["tomatoes", "cheese"],
-        dishTypes: ["pizza", "italian", "cheese"],
-        dietary: "vegetarian",
-        cuisine: "italian",
-        flavor: ["savory", "tangy"],
-        time: "45 mins",
-        difficulty: "Medium",
-        healthStatus: "healthy",
-        description: "A traditional Italian pizza with fresh tomatoes, mozzarella, and basil on a crispy crust.",
-        instructions: [
-            "Prepare pizza dough and let it rise",
-            "Roll out dough to desired thickness",
-            "Spread tomato sauce evenly",
-            "Add fresh mozzarella and tomatoes",
-            "Bake at 475°F for 12-15 minutes",
-            "Top with fresh basil before serving"
-        ]
-    },
-    {
-        name: "Healing Chicken Soup",
-        ingredients: ["chicken", "vegetables"],
-        dishTypes: ["soup", "chicken", "comfort"],
-        dietary: "",
-        cuisine: "",
-        flavor: ["savory"],
-        time: "60 mins",
-        difficulty: "Easy",
-        healthStatus: "sick",
-        description: "A nourishing chicken soup packed with vegetables and herbs to help you feel better when you're under the weather.",
-        instructions: [
-            "Bring chicken broth to a simmer in a large pot",
-            "Add chicken pieces and cook for 20 minutes",
-            "Add chopped vegetables like carrots, celery, and onions",
-            "Simmer for 30 minutes until vegetables are tender",
-            "Add garlic, ginger, and herbs for immune support",
-            "Season with salt and pepper and serve hot"
-        ]
-    },
-    {
-        name: "Ginger Tea with Honey",
-        ingredients: ["ginger", "honey", "lemon"],
-        dishTypes: ["tea", "drink", "remedy"],
-        dietary: "vegan",
-        cuisine: "",
-        flavor: ["tangy", "sweet"],
-        time: "10 mins",
-        difficulty: "Easy",
-        healthStatus: "sick",
-        description: "A soothing ginger tea with honey and lemon to relieve cold symptoms and boost your immune system.",
-        instructions: [
-            "Boil water in a small pot",
-            "Add fresh ginger slices and simmer for 5 minutes",
-            "Remove from heat and add lemon juice",
-            "Stir in honey to taste",
-            "Pour into a mug and sip while warm",
-            "Rest and enjoy the soothing effects"
-        ]
-    },
-    {
-        name: "Simple Pasta Aglio e Olio",
-        ingredients: ["pasta", "garlic", "olive oil"],
-        dishTypes: ["pasta", "italian", "simple"],
-        dietary: "vegan",
-        cuisine: "italian",
-        flavor: ["savory"],
-        time: "25 mins",
-        difficulty: "Easy",
-        healthStatus: "healthy",
-        description: "Classic Italian pasta with garlic and olive oil - simple, elegant, and delicious.",
-        instructions: [
-            "Cook pasta according to package directions",
-            "Heat olive oil in a pan over medium heat",
-            "Add sliced garlic and cook until fragrant",
-            "Add red pepper flakes for a little heat",
-            "Toss cooked pasta with garlic oil",
-            "Season with salt and parsley"
-        ]
-    },
-    {
-        name: "Fresh Garden Salad",
-        ingredients: ["vegetables", "lettuce"],
-        dishTypes: ["salad", "fresh", "healthy"],
-        dietary: "vegan",
-        cuisine: "",
-        flavor: ["fresh", "tangy"],
-        time: "15 mins",
-        difficulty: "Easy",
-        healthStatus: "healthy",
-        description: "A crisp, refreshing salad with mixed greens and fresh vegetables.",
-        instructions: [
-            "Wash and dry mixed greens",
-            "Chop fresh vegetables like tomatoes, cucumbers, and bell peppers",
-            "Toss greens and vegetables in a large bowl",
-            "Drizzle with olive oil and lemon juice",
-            "Season with salt and pepper",
-            "Top with fresh herbs if desired"
-        ]
-    },
-    {
-        name: "Chocolate Chip Cookies",
-        ingredients: ["flour", "sugar", "chocolate"],
-        dishTypes: ["cookies", "dessert", "baking", "sweet"],
-        dietary: "vegetarian",
-        cuisine: "",
-        flavor: ["sweet"],
-        time: "25 mins",
-        difficulty: "Medium",
-        healthStatus: "healthy",
-        description: "Classic homemade chocolate chip cookies - crispy on the edges, chewy in the center.",
-        instructions: [
-            "Cream together butter and sugars until fluffy",
-            "Beat in eggs and vanilla extract",
-            "Mix in flour, baking soda, and salt",
-            "Fold in chocolate chips",
-            "Drop spoonfuls on baking sheet",
-            "Bake at 375°F for 10-12 minutes until golden"
-        ]
-    },
-    {
-        name: "Grilled Cheese Sandwich",
-        ingredients: ["bread", "cheese", "butter"],
-        dishTypes: ["sandwich", "grilled cheese", "comfort"],
-        dietary: "vegetarian",
-        cuisine: "american",
-        flavor: ["savory"],
-        time: "10 mins",
-        difficulty: "Easy",
-        healthStatus: "healthy",
-        description: "The ultimate comfort food - crispy golden bread with melted cheese inside.",
-        instructions: [
-            "Butter one side of each bread slice",
-            "Place cheese between bread slices, buttered sides out",
-            "Heat skillet over medium heat",
-            "Cook sandwich for 3-4 minutes per side",
-            "Press down gently with spatula",
-            "Serve hot when cheese is melted and bread is golden"
-        ]
+    chatgpt: {
+        apiKey: '', // User will need to add their API key
+        endpoint: 'https://api.openai.com/v1/chat/completions',
+        model: 'gpt-3.5-turbo'
     }
-];
+};
 
-// Handle recipe form submission
-document.getElementById('recipe-form').addEventListener('submit', function(e) {
+// Current AI model preference
+let currentAIModel = 'claude'; // Default to Claude
+
+// AI Recipe Generation
+async function generateRecipeWithAI(ingredients, dishType, healthStatus, dietary, cuisine, flavors, aiModel) {
+    const modelConfig = AI_CONFIG[aiModel];
+    
+    if (!modelConfig.apiKey) {
+        showNotification(`Please add your ${aiModel.toUpperCase()} API key in settings`, 'error');
+        return null;
+    }
+
+    const prompt = createRecipePrompt(ingredients, dishType, healthStatus, dietary, cuisine, flavors);
+    
+    try {
+        let response;
+        
+        switch(aiModel) {
+            case 'claude':
+                response = await callClaudeAPI(modelConfig, prompt);
+                break;
+            case 'gemini':
+                response = await callGeminiAPI(modelConfig, prompt);
+                break;
+            case 'chatgpt':
+                response = await callChatGPTAPI(modelConfig, prompt);
+                break;
+            default:
+                throw new Error('Unsupported AI model');
+        }
+        
+        return parseAIResponse(response, aiModel);
+    } catch (error) {
+        console.error('AI API Error:', error);
+        showNotification('Failed to generate recipe. Please check your API key.', 'error');
+        return null;
+    }
+}
+
+function createRecipePrompt(ingredients, dishType, healthStatus, dietary, cuisine, flavors) {
+    return `Create a detailed recipe based on these preferences:
+
+Ingredients available: ${ingredients.join(', ')}
+Dish type requested: ${dishType || 'Any'}
+Health status: ${healthStatus}
+Dietary restrictions: ${dietary || 'None'}
+Cuisine preference: ${cuisine || 'Any'}
+Flavor preferences: ${flavors.length > 0 ? flavors.join(', ') : 'None'}
+
+Please respond with a JSON object in this exact format:
+{
+    "name": "Recipe Name",
+    "description": "Brief description of the dish",
+    "time": "Total time in minutes",
+    "difficulty": "Easy/Medium/Hard",
+    "ingredients": ["ingredient1", "ingredient2", "ingredient3"],
+    "instructions": ["Step 1", "Step 2", "Step 3"],
+    "tips": "Optional cooking tips"
+}
+
+Make sure the recipe is practical, uses the available ingredients, and matches all preferences exactly.`;
+}
+
+async function callClaudeAPI(config, prompt) {
+    const response = await fetch(config.endpoint, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': config.apiKey,
+            'anthropic-version': '2023-06-01'
+        },
+        body: JSON.stringify({
+            model: config.model,
+            max_tokens: 1000,
+            messages: [{
+                role: 'user',
+                content: prompt
+            }]
+        })
+    });
+    
+    const data = await response.json();
+    return data.content[0].text;
+}
+
+async function callGeminiAPI(config, prompt) {
+    const response = await fetch(`${config.endpoint}?key=${config.apiKey}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            contents: [{
+                parts: [{
+                    text: prompt
+                }]
+            }]
+        })
+    });
+    
+    const data = await response.json();
+    return data.candidates[0].content.parts[0].text;
+}
+
+async function callChatGPTAPI(config, prompt) {
+    const response = await fetch(config.endpoint, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${config.apiKey}`
+        },
+        body: JSON.stringify({
+            model: config.model,
+            messages: [{
+                role: 'user',
+                content: prompt
+            }],
+            max_tokens: 1000
+        })
+    });
+    
+    const data = await response.json();
+    return data.choices[0].message.content;
+}
+
+function parseAIResponse(response, aiModel) {
+    try {
+        // Extract JSON from the response
+        const jsonMatch = response.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) {
+            throw new Error('No JSON found in response');
+        }
+        
+        const recipeData = JSON.parse(jsonMatch[0]);
+        
+        // Convert to our recipe format
+        return {
+            name: recipeData.name || 'Generated Recipe',
+            description: recipeData.description || 'AI-generated recipe based on your preferences',
+            time: recipeData.time || '30 mins',
+            difficulty: recipeData.difficulty || 'Medium',
+            ingredients: recipeData.ingredients || [],
+            instructions: recipeData.instructions || [],
+            tips: recipeData.tips || '',
+            healthStatus: healthStatus || 'healthy',
+            dietary: dietary || '',
+            cuisine: cuisine || '',
+            flavor: flavors || [],
+            aiGenerated: true,
+            aiModel: aiModel
+        };
+    } catch (error) {
+        console.error('Failed to parse AI response:', error);
+        throw new Error('Invalid AI response format');
+    }
+}
+
+// Handle recipe form submission with AI
+document.getElementById('recipe-form').addEventListener('submit', async function(e) {
     e.preventDefault();
     
-    const ingredients = document.getElementById('ingredients').value.toLowerCase().split(',').map(i => i.trim());
+    const ingredients = document.getElementById('ingredients').value.toLowerCase().split(',').map(i => i.trim()).filter(i => i);
     const dishType = document.getElementById('dish-type').value.toLowerCase();
     const healthStatus = document.querySelector('input[name="health-status"]:checked').value;
     const aiModel = document.getElementById('ai-model').value;
@@ -389,8 +367,11 @@ document.getElementById('recipe-form').addEventListener('submit', function(e) {
     const flavorCheckboxes = document.querySelectorAll('input[type="checkbox"]:checked');
     const flavors = Array.from(flavorCheckboxes).map(cb => cb.value);
     
-    // Find matching recipe
-    const recipe = findBestRecipe(ingredients, dishType, healthStatus, dietary, cuisine, flavors, aiModel);
+    // Show loading state
+    showRecipeLoading();
+    
+    // Generate recipe with AI
+    const recipe = await generateRecipeWithAI(ingredients, dishType, healthStatus, dietary, cuisine, flavors, aiModel);
     
     if (recipe) {
         displayRecipe(recipe);
@@ -399,116 +380,19 @@ document.getElementById('recipe-form').addEventListener('submit', function(e) {
     }
 });
 
-function findBestRecipe(ingredients, dishType, healthStatus, dietary, cuisine, flavors, aiModel) {
-    let bestMatch = null;
-    let bestScore = 0;
+function showRecipeLoading() {
+    const resultDiv = document.getElementById('recipe-result');
+    const contentDiv = document.getElementById('recipe-content');
     
-    recipeDatabase.forEach(recipe => {
-        let score = 0;
-        
-        // AI Model adjustments
-        switch(aiModel) {
-            case 'fast':
-                // Prioritize quick recipes
-                if (recipe.difficulty === 'Easy' && (recipe.time.includes('10') || recipe.time.includes('15'))) {
-                    score += 8;
-                }
-                break;
-            case 'creative':
-                // Prioritize unique combinations
-                if (recipe.dishTypes.includes('baking') || recipe.dishTypes.includes('dessert')) {
-                    score += 5;
-                }
-                break;
-            case 'healthy':
-                // Prioritize healthy recipes
-                if (recipe.dietary === 'vegan' || recipe.dietary === 'vegetarian') {
-                    score += 6;
-                }
-                break;
-            case 'smart':
-            default:
-                // Balanced approach - no extra bias
-                break;
-        }
-        
-        // Health status is most important - if sick, prioritize sick-friendly recipes
-        if (healthStatus === 'sick' && recipe.healthStatus === 'sick') {
-            score += 10;
-        } else if (healthStatus === 'healthy' && recipe.healthStatus === 'healthy') {
-            score += 5;
-        }
-        
-        // Dish type matching - much higher priority and smarter matching
-        if (dishType) {
-            const dishTypeLower = dishType.toLowerCase();
-            const recipeNameLower = recipe.name.toLowerCase();
-            
-            // Exact match in recipe name
-            if (recipeNameLower.includes(dishTypeLower) || dishTypeLower.includes(recipeNameLower)) {
-                score += 20;
-            }
-            // Match in dish types array
-            else if (recipe.dishTypes.some(type => 
-                type.toLowerCase().includes(dishTypeLower) || dishTypeLower.includes(type.toLowerCase())
-            )) {
-                score += 15;
-            }
-            // Partial match
-            else if (recipe.dishTypes.some(type => 
-                type.toLowerCase().split(' ').some(word => dishTypeLower.includes(word))
-            )) {
-                score += 8;
-            }
-        }
-        
-        // Ingredients matching - smarter matching
-        const matchingIngredients = ingredients.filter(ing => {
-            const ingLower = ing.toLowerCase();
-            return recipe.ingredients.some(recipeIng => {
-                const recipeIngLower = recipeIng.toLowerCase();
-                return recipeIngLower.includes(ingLower) || ingLower.includes(recipeIngLower);
-            });
-        });
-        
-        // Score ingredients based on percentage matched
-        const ingredientMatchPercentage = matchingIngredients.length / Math.max(ingredients.length, recipe.ingredients.length);
-        score += ingredientMatchPercentage * 10;
-        
-        // Bonus for matching multiple ingredients
-        if (matchingIngredients.length >= 2) {
-            score += 5;
-        }
-        
-        // Check dietary preference
-        if (dietary && recipe.dietary === dietary) {
-            score += 3;
-        }
-        
-        // Check cuisine preference
-        if (cuisine && recipe.cuisine === cuisine) {
-            score += 3;
-        }
-        
-        // Check flavor preferences
-        flavors.forEach(flavor => {
-            if (recipe.flavor.includes(flavor)) {
-                score += 2;
-            }
-        });
-        
-        // Bonus for recipes that match multiple criteria
-        if (dishType && matchingIngredients.length > 0) {
-            score += 3;
-        }
-        
-        if (score > bestScore && score > 0) {
-            bestScore = score;
-            bestMatch = recipe;
-        }
-    });
+    contentDiv.innerHTML = `
+        <div class="text-center py-12">
+            <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
+            <p class="mt-4 text-gray-600">AI is creating your perfect recipe...</p>
+        </div>
+    `;
     
-    return bestMatch;
+    resultDiv.classList.remove('hidden');
+    resultDiv.scrollIntoView({ behavior: 'smooth' });
 }
 
 function displayRecipe(recipe) {
@@ -519,12 +403,15 @@ function displayRecipe(recipe) {
         '<span class="bg-red-100 text-red-800 px-3 py-1 rounded-full"><i class="fas fa-heartbeat mr-1"></i>Comfort Food</span>' : 
         '<span class="bg-green-100 text-green-800 px-3 py-1 rounded-full"><i class="fas fa-heart mr-1"></i>Healthy</span>';
     
+    const aiBadge = recipe.aiGenerated ? 
+        `<span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full"><i class="fas fa-robot mr-1"></i>${recipe.aiModel.toUpperCase()}</span>` : '';
+    
     contentDiv.innerHTML = `
-        <div class="bg-gradient-to-r from-purple-50 to-blue-50 p-6 rounded-lg mb-6">
+        <div class="bg-gradient-to-r from-orange-50 to-yellow-50 p-6 rounded-lg mb-6">
             <h4 class="text-2xl font-bold text-gray-800 mb-2">${recipe.name}</h4>
             <p class="text-gray-600 mb-4">${recipe.description}</p>
             <div class="flex flex-wrap gap-4 text-sm">
-                <span class="bg-purple-100 text-purple-800 px-3 py-1 rounded-full">
+                <span class="bg-orange-100 text-orange-800 px-3 py-1 rounded-full">
                     <i class="fas fa-clock mr-1"></i> ${recipe.time}
                 </span>
                 <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full">
@@ -534,6 +421,7 @@ function displayRecipe(recipe) {
                     <i class="fas fa-globe mr-1"></i> ${recipe.cuisine || 'Universal'}
                 </span>
                 ${healthBadge}
+                ${aiBadge}
                 ${recipe.dietary ? `<span class="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full">
                     <i class="fas fa-leaf mr-1"></i> ${recipe.dietary}
                 </span>` : ''}
@@ -542,12 +430,26 @@ function displayRecipe(recipe) {
         
         <div class="mb-6">
             <h5 class="text-lg font-semibold mb-3 text-gray-800">
-                <i class="fas fa-list-ol mr-2 text-purple-600"></i>Instructions
+                <i class="fas fa-list-ol mr-2 text-orange-600"></i>Ingredients
+            </h5>
+            <ul class="grid md:grid-cols-2 gap-2">
+                ${recipe.ingredients.map(ingredient => `
+                    <li class="flex items-center text-gray-700">
+                        <i class="fas fa-check text-green-500 mr-2"></i>
+                        ${ingredient}
+                    </li>
+                `).join('')}
+            </ul>
+        </div>
+        
+        <div class="mb-6">
+            <h5 class="text-lg font-semibold mb-3 text-gray-800">
+                <i class="fas fa-list-ol mr-2 text-orange-600"></i>Instructions
             </h5>
             <ol class="space-y-3">
                 ${recipe.instructions.map((instruction, index) => `
                     <li class="flex items-start">
-                        <span class="bg-purple-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold mr-3 flex-shrink-0">
+                        <span class="bg-orange-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold mr-3 flex-shrink-0">
                             ${index + 1}
                         </span>
                         <span class="text-gray-700">${instruction}</span>
@@ -555,6 +457,15 @@ function displayRecipe(recipe) {
                 `).join('')}
             </ol>
         </div>
+        
+        ${recipe.tips ? `
+        <div class="bg-yellow-50 border border-yellow-200 p-4 rounded-lg mb-6">
+            <h5 class="font-semibold text-yellow-800 mb-2">
+                <i class="fas fa-lightbulb mr-2"></i>Pro Tips
+            </h5>
+            <p class="text-yellow-700 text-sm">${recipe.tips}</p>
+        </div>
+        ` : ''}
         
         ${recipe.healthStatus === 'sick' ? `
         <div class="bg-blue-50 border border-blue-200 p-4 rounded-lg mb-6">
@@ -569,13 +480,13 @@ function displayRecipe(recipe) {
         ` : ''}
         
         <div class="flex gap-4">
-            <button onclick="saveRecipe('${recipe.name}')" class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors">
+            <button onclick="saveRecipe('${recipe.name}')" class="bg-orange-600 text-white px-6 py-2 rounded-lg hover:bg-orange-700 transition-colors">
                 <i class="fas fa-bookmark mr-2"></i>Save Recipe
             </button>
             <button onclick="shareRecipe('${recipe.name}')" class="bg-gray-200 text-gray-800 px-6 py-2 rounded-lg hover:bg-gray-300 transition-colors">
                 <i class="fas fa-share mr-2"></i>Share
             </button>
-            <button onclick="generateNewRecipe()" class="border border-purple-600 text-purple-600 px-6 py-2 rounded-lg hover:bg-purple-50 transition-colors">
+            <button onclick="generateNewRecipe()" class="border border-orange-600 text-orange-600 px-6 py-2 rounded-lg hover:bg-orange-50 transition-colors">
                 <i class="fas fa-redo mr-2"></i>Generate Another
             </button>
         </div>
@@ -583,6 +494,87 @@ function displayRecipe(recipe) {
     
     resultDiv.classList.remove('hidden');
     resultDiv.scrollIntoView({ behavior: 'smooth' });
+}
+
+// Settings and API Key Management
+function showSettingsModal() {
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center';
+    modal.innerHTML = `
+        <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">AI Settings</h2>
+                <button onclick="closeSettingsModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Claude API Key</label>
+                    <input type="password" id="claudeApiKey" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500" placeholder="sk-ant-...">
+                    <p class="text-xs text-gray-500 mt-1">Get your key from console.anthropic.com</p>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Gemini API Key</label>
+                    <input type="password" id="geminiApiKey" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500" placeholder="AIza...">
+                    <p class="text-xs text-gray-500 mt-1">Get your key from makersuite.google.com</p>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">ChatGPT API Key</label>
+                    <input type="password" id="chatgptApiKey" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500" placeholder="sk-...">
+                    <p class="text-xs text-gray-500 mt-1">Get your key from platform.openai.com</p>
+                </div>
+                
+                <button onclick="saveApiKeys()" class="w-full bg-orange-600 text-white py-3 rounded-lg font-semibold hover:bg-orange-700 transition-colors">
+                    Save API Keys
+                </button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Load existing keys
+    const keys = JSON.parse(localStorage.getItem('aiApiKeys') || '{}');
+    document.getElementById('claudeApiKey').value = keys.claude || '';
+    document.getElementById('geminiApiKey').value = keys.gemini || '';
+    document.getElementById('chatgptApiKey').value = keys.chatgpt || '';
+}
+
+function closeSettingsModal() {
+    const modal = document.querySelector('.fixed.inset-0');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+function saveApiKeys() {
+    const keys = {
+        claude: document.getElementById('claudeApiKey').value,
+        gemini: document.getElementById('geminiApiKey').value,
+        chatgpt: document.getElementById('chatgptApiKey').value
+    };
+    
+    localStorage.setItem('aiApiKeys', JSON.stringify(keys));
+    
+    // Update AI_CONFIG
+    AI_CONFIG.claude.apiKey = keys.claude;
+    AI_CONFIG.gemini.apiKey = keys.gemini;
+    AI_CONFIG.chatgpt.apiKey = keys.chatgpt;
+    
+    showNotification('API keys saved successfully!', 'success');
+    closeSettingsModal();
+}
+
+// Load API keys on initialization
+function loadApiKeys() {
+    const keys = JSON.parse(localStorage.getItem('aiApiKeys') || '{}');
+    AI_CONFIG.claude.apiKey = keys.claude || '';
+    AI_CONFIG.gemini.apiKey = keys.gemini || '';
+    AI_CONFIG.chatgpt.apiKey = keys.chatgpt || '';
 }
 
 function displayNoRecipe() {
@@ -722,5 +714,25 @@ function toggleMobileMenu() {
 // Initialize page
 document.addEventListener('DOMContentLoaded', function() {
     initAuth(); // Initialize authentication system
+    loadApiKeys(); // Load API keys
+    
+    // Update navigation to include settings for non-logged-in users
+    if (!currentUser) {
+        const navButtons = document.querySelector('nav .flex.space-x-4');
+        if (navButtons) {
+            navButtons.innerHTML = `
+                <button class="text-gray-600 hover:text-orange-600 transition-colors">Features</button>
+                <button class="text-gray-600 hover:text-orange-600 transition-colors">How it Works</button>
+                <button onclick="showSettingsModal()" class="text-gray-600 hover:text-orange-600 transition-colors">
+                    <i class="fas fa-cog"></i>
+                </button>
+                <button onclick="showLoginModal()" class="text-gray-600 hover:text-orange-600 transition-colors">Log In</button>
+                <button onclick="showSignupModal()" class="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors">
+                    Sign Up
+                </button>
+            `;
+        }
+    }
+    
     console.log('Flavorly website loaded successfully!');
 });
