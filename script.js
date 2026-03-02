@@ -185,15 +185,15 @@ const AI_CONFIG = {
         endpoint: 'https://api.anthropic.com/v1/messages',
         model: 'claude-3-haiku-20240307'
     },
-    gemini: {
-        apiKey: '', // Add your Gemini API key here
-        endpoint: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent',
-        model: 'gemini-pro'
+    grok: {
+        apiKey: '', // Add your Grok API key here
+        endpoint: 'https://api.x.ai/v1/chat/completions',
+        model: 'grok-beta'
     },
-    chatgpt: {
-        apiKey: '', // Add your ChatGPT API key here
-        endpoint: 'https://api.openai.com/v1/chat/completions',
-        model: 'gpt-3.5-turbo'
+    mistral: {
+        apiKey: '', // Add your Mistral AI API key here
+        endpoint: 'https://api.mistral.ai/v1/chat/completions',
+        model: 'mistral-small-latest'
     }
 };
 
@@ -202,7 +202,7 @@ let currentAIModel = 'claude'; // Default to Claude
 
 // Check if API keys are configured
 function areApiKeysConfigured() {
-    return AI_CONFIG.claude.apiKey || AI_CONFIG.gemini.apiKey || AI_CONFIG.chatgpt.apiKey;
+    return AI_CONFIG.claude.apiKey || AI_CONFIG.grok.apiKey || AI_CONFIG.mistral.apiKey;
 }
 
 // AI Recipe Generation
@@ -223,11 +223,11 @@ async function generateRecipeWithAI(ingredients, dishType, healthStatus, dietary
             case 'claude':
                 response = await callClaudeAPI(modelConfig, prompt);
                 break;
-            case 'gemini':
-                response = await callGeminiAPI(modelConfig, prompt);
+            case 'grok':
+                response = await callGrokAPI(modelConfig, prompt);
                 break;
-            case 'chatgpt':
-                response = await callChatGPTAPI(modelConfig, prompt);
+            case 'mistral':
+                response = await callMistralAPI(modelConfig, prompt);
                 break;
             default:
                 throw new Error('Unsupported AI model');
@@ -287,26 +287,28 @@ async function callClaudeAPI(config, prompt) {
     return data.content[0].text;
 }
 
-async function callGeminiAPI(config, prompt) {
-    const response = await fetch(`${config.endpoint}?key=${config.apiKey}`, {
+async function callGrokAPI(config, prompt) {
+    const response = await fetch(config.endpoint, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${config.apiKey}`
         },
         body: JSON.stringify({
-            contents: [{
-                parts: [{
-                    text: prompt
-                }]
-            }]
+            model: config.model,
+            messages: [{
+                role: 'user',
+                content: prompt
+            }],
+            max_tokens: 1000
         })
     });
     
     const data = await response.json();
-    return data.candidates[0].content.parts[0].text;
+    return data.choices[0].message.content;
 }
 
-async function callChatGPTAPI(config, prompt) {
+async function callMistralAPI(config, prompt) {
     const response = await fetch(config.endpoint, {
         method: 'POST',
         headers: {
@@ -537,15 +539,15 @@ function showSettingsModal() {
                 </div>
                 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Gemini API Key</label>
-                    <input type="password" id="geminiApiKey" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500" placeholder="AIza...">
-                    <p class="text-xs text-gray-500 mt-1">Get your key from makersuite.google.com</p>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Grok API Key</label>
+                    <input type="password" id="grokApiKey" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500" placeholder="xai-...">
+                    <p class="text-xs text-gray-500 mt-1">Get your key from console.x.ai</p>
                 </div>
                 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">ChatGPT API Key</label>
-                    <input type="password" id="chatgptApiKey" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500" placeholder="sk-...">
-                    <p class="text-xs text-gray-500 mt-1">Get your key from platform.openai.com</p>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Mistral AI API Key</label>
+                    <input type="password" id="mistralApiKey" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500" placeholder="...">
+                    <p class="text-xs text-gray-500 mt-1">Get your key from console.mistral.ai</p>
                 </div>
                 
                 <button onclick="saveApiKeys()" class="w-full bg-orange-600 text-white py-3 rounded-lg font-semibold hover:bg-orange-700 transition-colors">
@@ -559,8 +561,8 @@ function showSettingsModal() {
     
     // Load existing keys
     document.getElementById('claudeApiKey').value = AI_CONFIG.claude.apiKey || '';
-    document.getElementById('geminiApiKey').value = AI_CONFIG.gemini.apiKey || '';
-    document.getElementById('chatgptApiKey').value = AI_CONFIG.chatgpt.apiKey || '';
+    document.getElementById('grokApiKey').value = AI_CONFIG.grok.apiKey || '';
+    document.getElementById('mistralApiKey').value = AI_CONFIG.mistral.apiKey || '';
 }
 
 function closeSettingsModal() {
@@ -572,8 +574,8 @@ function closeSettingsModal() {
 
 function saveApiKeys() {
     AI_CONFIG.claude.apiKey = document.getElementById('claudeApiKey').value;
-    AI_CONFIG.gemini.apiKey = document.getElementById('geminiApiKey').value;
-    AI_CONFIG.chatgpt.apiKey = document.getElementById('chatgptApiKey').value;
+    AI_CONFIG.grok.apiKey = document.getElementById('grokApiKey').value;
+    AI_CONFIG.mistral.apiKey = document.getElementById('mistralApiKey').value;
     
     showNotification('API keys saved successfully! All users can now use AI models.', 'success');
     closeSettingsModal();
