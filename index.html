@@ -42,8 +42,9 @@
                 <div class="flex items-center space-x-4">
                     <button class="text-gray-600 hover:text-purple-600 transition-colors">Features</button>
                     <button class="text-gray-600 hover:text-purple-600 transition-colors">How it Works</button>
-                    <button class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors">
-                        Get Started
+                    <button onclick="showLoginModal()" class="text-gray-600 hover:text-purple-600 transition-colors">Log In</button>
+                    <button onclick="showSignupModal()" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors">
+                        Sign Up
                     </button>
                 </div>
             </div>
@@ -165,78 +166,6 @@
                         <span>Instant Results</span>
                         <i class="fas fa-arrow-right ml-2"></i>
                     </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Testimonials Section -->
-    <section class="py-20 bg-gradient-to-r from-purple-50 to-pink-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center mb-16">
-                <div class="inline-flex items-center bg-white text-purple-800 rounded-full px-4 py-2 mb-4 shadow-md">
-                    <i class="fas fa-heart mr-2"></i>
-                    <span class="text-sm font-semibold">Love from Our Users</span>
-                </div>
-                <h2 class="text-4xl font-bold text-gray-800 mb-6">People Are Obsessed with Flavorly</h2>
-                <p class="text-xl text-gray-600 max-w-3xl mx-auto">
-                    Join thousands of home cooks who've transformed their kitchen experience
-                </p>
-            </div>
-            
-            <div class="grid md:grid-cols-3 gap-8">
-                <div class="bg-white p-6 rounded-2xl shadow-lg">
-                    <div class="flex items-center mb-4">
-                        <img src="https://picsum.photos/seed/user1/50/50.jpg" alt="User" class="w-12 h-12 rounded-full mr-3">
-                        <div>
-                            <div class="font-semibold text-gray-800">Sarah Chen</div>
-                            <div class="text-sm text-gray-500">Home Cook</div>
-                        </div>
-                    </div>
-                    <div class="flex mb-3">
-                        <i class="fas fa-star text-yellow-400"></i>
-                        <i class="fas fa-star text-yellow-400"></i>
-                        <i class="fas fa-star text-yellow-400"></i>
-                        <i class="fas fa-star text-yellow-400"></i>
-                        <i class="fas fa-star text-yellow-400"></i>
-                    </div>
-                    <p class="text-gray-700">"Flavorly completely changed how I cook. I used to spend hours searching for recipes. Now I just tell it what I have and get perfect suggestions every time!"</p>
-                </div>
-                
-                <div class="bg-white p-6 rounded-2xl shadow-lg">
-                    <div class="flex items-center mb-4">
-                        <img src="https://picsum.photos/seed/user2/50/50.jpg" alt="User" class="w-12 h-12 rounded-full mr-3">
-                        <div>
-                            <div class="font-semibold text-gray-800">Mike Rodriguez</div>
-                            <div class="text-sm text-gray-500">Busy Dad</div>
-                        </div>
-                    </div>
-                    <div class="flex mb-3">
-                        <i class="fas fa-star text-yellow-400"></i>
-                        <i class="fas fa-star text-yellow-400"></i>
-                        <i class="fas fa-star text-yellow-400"></i>
-                        <i class="fas fa-star text-yellow-400"></i>
-                        <i class="fas fa-star text-yellow-400"></i>
-                    </div>
-                    <p class="text-gray-700">"The health-aware feature is incredible! When I'm sick, it suggests comforting recipes. When I'm healthy, it gives me nutritious meals. It's like having a personal nutritionist."</p>
-                </div>
-                
-                <div class="bg-white p-6 rounded-2xl shadow-lg">
-                    <div class="flex items-center mb-4">
-                        <img src="https://picsum.photos/seed/user3/50/50.jpg" alt="User" class="w-12 h-12 rounded-full mr-3">
-                        <div>
-                            <div class="font-semibold text-gray-800">Emma Thompson</div>
-                            <div class="text-sm text-gray-500">Food Blogger</div>
-                        </div>
-                    </div>
-                    <div class="flex mb-3">
-                        <i class="fas fa-star text-yellow-400"></i>
-                        <i class="fas fa-star text-yellow-400"></i>
-                        <i class="fas fa-star text-yellow-400"></i>
-                        <i class="fas fa-star text-yellow-400"></i>
-                        <i class="fas fa-star text-yellow-400"></i>
-                    </div>
-                    <p class="text-gray-700">"As a food blogger, I'm amazed by the creativity. The AI comes up with combinations I'd never think of, and they're always delicious. My followers love the recipes I share!"</p>
                 </div>
             </div>
         </div>
@@ -476,6 +405,98 @@
             </div>
         </div>
     </footer>
+
+    <!-- Auth Modals -->
+    <!-- Login Modal -->
+    <div id="loginModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
+        <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4 transform transition-all">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">Welcome Back</h2>
+                <button onclick="closeLoginModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <form id="loginForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                    <input type="email" id="loginEmail" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="you@example.com">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                    <input type="password" id="loginPassword" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="••••••••">
+                </div>
+                
+                <div class="flex items-center justify-between">
+                    <label class="flex items-center">
+                        <input type="checkbox" class="form-checkbox text-purple-600">
+                        <span class="ml-2 text-sm text-gray-600">Remember me</span>
+                    </label>
+                    <a href="#" class="text-sm text-purple-600 hover:text-purple-700">Forgot password?</a>
+                </div>
+                
+                <button type="submit" class="w-full bg-purple-600 text-white py-3 rounded-lg font-semibold hover:bg-purple-700 transition-colors">
+                    Log In
+                </button>
+                
+                <div class="text-center text-sm text-gray-600">
+                    Don't have an account? 
+                    <a href="#" onclick="switchToSignup()" class="text-purple-600 hover:text-purple-700 font-semibold">Sign up</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Signup Modal -->
+    <div id="signupModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
+        <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4 transform transition-all">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">Create Account</h2>
+                <button onclick="closeSignupModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <form id="signupForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+                    <input type="text" id="signupName" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="John Doe">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                    <input type="email" id="signupEmail" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="you@example.com">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                    <input type="password" id="signupPassword" required minlength="6" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="••••••••">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Confirm Password</label>
+                    <input type="password" id="signupConfirmPassword" required minlength="6" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="••••••••">
+                </div>
+                
+                <div class="flex items-center">
+                    <input type="checkbox" id="terms" required class="form-checkbox text-purple-600">
+                    <label for="terms" class="ml-2 text-sm text-gray-600">
+                        I agree to the <a href="#" class="text-purple-600 hover:text-purple-700">Terms of Service</a> and <a href="#" class="text-purple-600 hover:text-purple-700">Privacy Policy</a>
+                    </label>
+                </div>
+                
+                <button type="submit" class="w-full bg-purple-600 text-white py-3 rounded-lg font-semibold hover:bg-purple-700 transition-colors">
+                    Create Account
+                </button>
+                
+                <div class="text-center text-sm text-gray-600">
+                    Already have an account? 
+                    <a href="#" onclick="switchToLogin()" class="text-purple-600 hover:text-purple-700 font-semibold">Log in</a>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <script src="script.js"></script>
 </body>

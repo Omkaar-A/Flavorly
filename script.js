@@ -1,3 +1,170 @@
+// Authentication System
+let currentUser = null;
+
+// Initialize auth state
+function initAuth() {
+    const savedUser = localStorage.getItem('flavorlyUser');
+    if (savedUser) {
+        currentUser = JSON.parse(savedUser);
+        updateUIForLoggedInUser();
+    }
+}
+
+// Modal functions
+function showLoginModal() {
+    document.getElementById('loginModal').classList.remove('hidden');
+    document.getElementById('signupModal').classList.add('hidden');
+}
+
+function showSignupModal() {
+    document.getElementById('signupModal').classList.remove('hidden');
+    document.getElementById('loginModal').classList.add('hidden');
+}
+
+function closeLoginModal() {
+    document.getElementById('loginModal').classList.add('hidden');
+}
+
+function closeSignupModal() {
+    document.getElementById('signupModal').classList.add('hidden');
+}
+
+function switchToSignup() {
+    closeLoginModal();
+    showSignupModal();
+}
+
+function switchToLogin() {
+    closeSignupModal();
+    showLoginModal();
+}
+
+// Update UI for logged in user
+function updateUIForLoggedInUser() {
+    const navButtons = document.querySelector('nav .flex.space-x-4');
+    if (currentUser && navButtons) {
+        navButtons.innerHTML = `
+            <button class="text-gray-600 hover:text-purple-600 transition-colors">Features</button>
+            <button class="text-gray-600 hover:text-purple-600 transition-colors">How it Works</button>
+            <button class="text-gray-600 hover:text-purple-600 transition-colors">My Recipes</button>
+            <div class="relative group">
+                <button class="flex items-center text-gray-600 hover:text-purple-600 transition-colors">
+                    <i class="fas fa-user-circle mr-2"></i>${currentUser.name}
+                    <i class="fas fa-chevron-down ml-1 text-xs"></i>
+                </button>
+                <div class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
+                    <a href="#" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Profile</a>
+                    <a href="#" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Settings</a>
+                    <hr class="my-1">
+                    <a href="#" onclick="logout()" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Log Out</a>
+                </div>
+            </div>
+        `;
+    }
+}
+
+// Handle login
+document.getElementById('loginForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const email = document.getElementById('loginEmail').value;
+    const password = document.getElementById('loginPassword').value;
+    
+    // Get users from localStorage
+    const users = JSON.parse(localStorage.getItem('flavorlyUsers') || '[]');
+    
+    // Find user
+    const user = users.find(u => u.email === email && u.password === password);
+    
+    if (user) {
+        currentUser = user;
+        localStorage.setItem('flavorlyUser', JSON.stringify(user));
+        updateUIForLoggedInUser();
+        closeLoginModal();
+        showNotification('Welcome back, ' + user.name + '!', 'success');
+        
+        // Reset form
+        document.getElementById('loginForm').reset();
+    } else {
+        showNotification('Invalid email or password', 'error');
+    }
+});
+
+// Handle signup
+document.getElementById('signupForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const name = document.getElementById('signupName').value;
+    const email = document.getElementById('signupEmail').value;
+    const password = document.getElementById('signupPassword').value;
+    const confirmPassword = document.getElementById('signupConfirmPassword').value;
+    const terms = document.getElementById('terms').checked;
+    
+    // Validation
+    if (password !== confirmPassword) {
+        showNotification('Passwords do not match', 'error');
+        return;
+    }
+    
+    if (!terms) {
+        showNotification('Please accept the terms and conditions', 'error');
+        return;
+    }
+    
+    // Get users from localStorage
+    const users = JSON.parse(localStorage.getItem('flavorlyUsers') || '[]');
+    
+    // Check if user already exists
+    if (users.find(u => u.email === email)) {
+        showNotification('An account with this email already exists', 'error');
+        return;
+    }
+    
+    // Create new user
+    const newUser = {
+        id: Date.now().toString(),
+        name: name,
+        email: email,
+        password: password,
+        createdAt: new Date().toISOString(),
+        savedRecipes: []
+    };
+    
+    users.push(newUser);
+    localStorage.setItem('flavorlyUsers', JSON.stringify(users));
+    
+    // Auto login
+    currentUser = newUser;
+    localStorage.setItem('flavorlyUser', JSON.stringify(newUser));
+    updateUIForLoggedInUser();
+    closeSignupModal();
+    showNotification('Account created successfully! Welcome to Flavorly!', 'success');
+    
+    // Reset form
+    document.getElementById('signupForm').reset();
+});
+
+// Logout function
+function logout() {
+    currentUser = null;
+    localStorage.removeItem('flavorlyUser');
+    
+    // Reset navigation
+    const navButtons = document.querySelector('nav .flex.space-x-4');
+    if (navButtons) {
+        navButtons.innerHTML = `
+            <button class="text-gray-600 hover:text-purple-600 transition-colors">Features</button>
+            <button class="text-gray-600 hover:text-purple-600 transition-colors">How it Works</button>
+            <button onclick="showLoginModal()" class="text-gray-600 hover:text-purple-600 transition-colors">Log In</button>
+            <button onclick="showSignupModal()" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors">
+                Sign Up
+            </button>
+        `;
+    }
+    
+    showNotification('Logged out successfully', 'success');
+}
+
 // Show recipe generator section
 function showRecipeGenerator() {
     const generator = document.getElementById('recipe-generator');
@@ -323,17 +490,29 @@ function displayNoRecipe() {
 }
 
 function saveRecipe(recipeName) {
-    // Get existing saved recipes or create new array
-    let savedRecipes = JSON.parse(localStorage.getItem('savedRecipes') || '[]');
+    if (!currentUser) {
+        showNotification('Please log in to save recipes', 'info');
+        showLoginModal();
+        return;
+    }
     
-    if (!savedRecipes.includes(recipeName)) {
-        savedRecipes.push(recipeName);
-        localStorage.setItem('savedRecipes', JSON.stringify(savedRecipes));
-        
-        // Show success message
-        showNotification('Recipe saved successfully!', 'success');
-    } else {
-        showNotification('Recipe already saved!', 'info');
+    // Get users from localStorage
+    const users = JSON.parse(localStorage.getItem('flavorlyUsers') || '[]');
+    const userIndex = users.findIndex(u => u.id === currentUser.id);
+    
+    if (userIndex !== -1) {
+        if (!users[userIndex].savedRecipes.includes(recipeName)) {
+            users[userIndex].savedRecipes.push(recipeName);
+            localStorage.setItem('flavorlyUsers', JSON.stringify(users));
+            
+            // Update current user
+            currentUser = users[userIndex];
+            localStorage.setItem('flavorlyUser', JSON.stringify(currentUser));
+            
+            showNotification('Recipe saved successfully!', 'success');
+        } else {
+            showNotification('Recipe already saved!', 'info');
+        }
     }
 }
 
@@ -425,6 +604,6 @@ function toggleMobileMenu() {
 
 // Initialize page
 document.addEventListener('DOMContentLoaded', function() {
-    // Add any initialization code here
+    initAuth(); // Initialize authentication system
     console.log('Flavorly website loaded successfully!');
 });
