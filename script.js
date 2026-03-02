@@ -74,8 +74,235 @@ function handleForgotPassword() {
         return;
     }
     
-    // In a real app, you'd send a reset email. For demo, we'll show a success message
-    showNotification(`Password reset link sent to ${email}. Check your inbox!`, 'success');
+    // Generate reset token
+    const resetToken = generateResetToken();
+    const resetLink = `${window.location.origin}${window.location.pathname}?reset=${resetToken}&email=${encodeURIComponent(email)}`;
+    
+    // Store reset token
+    const resetTokens = JSON.parse(localStorage.getItem('passwordResetTokens') || '{}');
+    resetTokens[resetToken] = {
+        email: email,
+        createdAt: new Date().toISOString(),
+        expiresAt: new Date(Date.now() + 3600000).toISOString() // 1 hour expiry
+    };
+    localStorage.setItem('passwordResetTokens', JSON.stringify(resetTokens));
+    
+    // Show email modal with the reset link
+    showEmailSentModal(email, resetLink);
+}
+
+function generateResetToken() {
+    return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+}
+
+function showEmailSentModal(email, resetLink) {
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center';
+    modal.innerHTML = `
+        <div class="bg-white rounded-2xl p-8 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">Password Reset Email Sent</h2>
+                <button onclick="closeEmailModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <div class="mb-6">
+                <div class="bg-blue-50 border border-blue-200 p-4 rounded-lg mb-4">
+                    <p class="text-sm text-blue-800">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        This is a simulated email system. In a real application, this email would be sent to your inbox.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="border border-gray-200 rounded-lg overflow-hidden">
+                <div class="bg-gray-50 px-4 py-3 border-b border-gray-200">
+                    <div class="flex items-center">
+                        <div class="w-8 h-8 bg-orange-600 rounded-lg flex items-center justify-center mr-3">
+                            <i class="fas fa-utensils text-white text-sm"></i>
+                        </div>
+                        <div>
+                            <p class="font-semibold text-gray-800">Flavorly</p>
+                            <p class="text-xs text-gray-500">noreply@flavorly.com</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="p-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-2">Password Reset Request</h3>
+                    <p class="text-gray-600 mb-4">Hello,</p>
+                    <p class="text-gray-600 mb-4">
+                        We received a request to reset the password for your Flavorly account associated with this email address.
+                    </p>
+                    <p class="text-gray-600 mb-4">
+                        Click the button below to reset your password. This link will expire in 1 hour.
+                    </p>
+                    
+                    <div class="my-6">
+                        <a href="${resetLink}" class="inline-block bg-orange-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-orange-700 transition-colors">
+                            Reset Password
+                        </a>
+                    </div>
+                    
+                    <p class="text-gray-600 mb-4">
+                        Or copy and paste this link into your browser:
+                    </p>
+                    <div class="bg-gray-100 p-3 rounded-lg break-all">
+                        <code class="text-sm text-gray-700">${resetLink}</code>
+                    </div>
+                    
+                    <p class="text-gray-600 mb-4">
+                        If you didn't request this password reset, please ignore this email. Your password will remain unchanged.
+                    </p>
+                    
+                    <p class="text-gray-600">
+                        Best regards,<br>
+                        The Flavorly Team
+                    </p>
+                </div>
+                
+                <div class="bg-gray-50 px-4 py-3 border-t border-gray-200">
+                    <p class="text-xs text-gray-500 text-center">
+                        This is an automated message. Please do not reply to this email.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="mt-6 flex justify-end space-x-3">
+                <button onclick="closeEmailModal()" class="px-4 py-2 text-gray-600 hover:text-gray-800">
+                    Close
+                </button>
+                <button onclick="copyResetLink('${resetLink}')" class="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700">
+                    Copy Link
+                </button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+}
+
+function closeEmailModal() {
+    const modal = document.querySelector('.fixed.inset-0');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+function copyResetLink(link) {
+    navigator.clipboard.writeText(link).then(() => {
+        showNotification('Reset link copied to clipboard!', 'success');
+    }).catch(() => {
+        showNotification('Failed to copy link', 'error');
+    });
+}
+
+// Check for password reset on page load
+function checkPasswordReset() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const resetToken = urlParams.get('reset');
+    const email = urlParams.get('email');
+    
+    if (resetToken && email) {
+        const resetTokens = JSON.parse(localStorage.getItem('passwordResetTokens') || '{}');
+        const tokenData = resetTokens[resetToken];
+        
+        if (tokenData && tokenData.email === email && new Date(tokenData.expiresAt) > new Date()) {
+            showPasswordResetModal(email, resetToken);
+        } else {
+            showNotification('Invalid or expired reset link', 'error');
+            // Clean URL
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+    }
+}
+
+function showPasswordResetModal(email, resetToken) {
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center';
+    modal.innerHTML = `
+        <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">Reset Password</h2>
+                <button onclick="closePasswordResetModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <form id="resetPasswordForm" class="space-y-4">
+                <input type="hidden" id="resetEmail" value="${email}">
+                <input type="hidden" id="resetToken" value="${resetToken}">
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                    <input type="email" value="${email}" disabled class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">New Password</label>
+                    <input type="password" id="newPassword" required minlength="6" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500" placeholder="Enter new password">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Confirm New Password</label>
+                    <input type="password" id="confirmNewPassword" required minlength="6" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500" placeholder="Confirm new password">
+                </div>
+                
+                <button type="submit" class="w-full bg-orange-600 text-white py-3 rounded-lg font-semibold hover:bg-orange-700 transition-colors">
+                    Reset Password
+                </button>
+            </form>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Add form submit handler
+    document.getElementById('resetPasswordForm').addEventListener('submit', handlePasswordReset);
+}
+
+function closePasswordResetModal() {
+    const modal = document.querySelector('.fixed.inset-0');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+function handlePasswordReset(e) {
+    e.preventDefault();
+    
+    const email = document.getElementById('resetEmail').value;
+    const token = document.getElementById('resetToken').value;
+    const newPassword = document.getElementById('newPassword').value;
+    const confirmPassword = document.getElementById('confirmNewPassword').value;
+    
+    if (newPassword !== confirmPassword) {
+        showNotification('Passwords do not match', 'error');
+        return;
+    }
+    
+    // Get users and update password
+    const users = JSON.parse(localStorage.getItem('flavorlyUsers') || '[]');
+    const userIndex = users.findIndex(u => u.email === email);
+    
+    if (userIndex !== -1) {
+        users[userIndex].password = newPassword;
+        localStorage.setItem('flavorlyUsers', JSON.stringify(users));
+        
+        // Clean up reset token
+        const resetTokens = JSON.parse(localStorage.getItem('passwordResetTokens') || '{}');
+        delete resetTokens[token];
+        localStorage.setItem('passwordResetTokens', JSON.stringify(resetTokens));
+        
+        showNotification('Password reset successfully! You can now log in with your new password.', 'success');
+        closePasswordResetModal();
+        
+        // Clean URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+    } else {
+        showNotification('User not found', 'error');
+    }
 }
 
 // Handle login
@@ -842,6 +1069,7 @@ function toggleMobileMenu() {
 // Initialize page
 document.addEventListener('DOMContentLoaded', function() {
     initAuth(); // Initialize authentication system
+    checkPasswordReset(); // Check for password reset requests
     
     // Add event listeners for navigation buttons
     document.addEventListener('click', function(e) {
