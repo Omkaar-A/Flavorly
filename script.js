@@ -260,7 +260,7 @@ async function generateRecipeWithAI(ingredients, dishType, healthStatus, dietary
                 throw new Error('Unsupported AI model');
         }
         
-        return parseAIResponse(response, aiModel);
+        return parseAIResponse(response, aiModel, healthStatus, dietary, cuisine, flavors);
     } catch (error) {
         console.error('AI API Error:', error);
         showNotification('Failed to generate recipe. Please try again or contact admin.', 'error');
@@ -360,7 +360,7 @@ async function callMistralAPI(config, prompt) {
     return data.choices[0].message.content;
 }
 
-function parseAIResponse(response, aiModel) {
+function parseAIResponse(response, aiModel, healthStatus, dietary, cuisine, flavors) {
     try {
         // Extract JSON from the response
         const jsonMatch = response.match(/\{[\s\S]*\}/);
