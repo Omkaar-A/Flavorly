@@ -85,11 +85,15 @@ document.getElementById('loginForm').addEventListener('submit', function(e) {
     const email = document.getElementById('loginEmail').value;
     const password = document.getElementById('loginPassword').value;
     
+    console.log('Login attempt:', { email, password });
+    
     // Get users from localStorage
     const users = JSON.parse(localStorage.getItem('flavorlyUsers') || '[]');
+    console.log('All users in storage:', users);
     
     // Find user
     const user = users.find(u => u.email === email && u.password === password);
+    console.log('Found user:', user);
     
     if (user) {
         currentUser = user;
@@ -101,7 +105,11 @@ document.getElementById('loginForm').addEventListener('submit', function(e) {
         // Reset form
         document.getElementById('loginForm').reset();
     } else {
-        showNotification('Invalid email or password', 'error');
+        console.log('Login failed. Checking for email match only...');
+        const emailMatch = users.find(u => u.email === email);
+        console.log('Email match found:', emailMatch);
+        
+        showNotification('Invalid email or password. Check console for details.', 'error');
     }
 });
 
@@ -114,6 +122,8 @@ document.getElementById('signupForm').addEventListener('submit', function(e) {
     const password = document.getElementById('signupPassword').value;
     const confirmPassword = document.getElementById('signupConfirmPassword').value;
     const terms = document.getElementById('terms').checked;
+    
+    console.log('Signup attempt:', { name, email, password, confirmPassword, terms });
     
     // Validation
     if (password !== confirmPassword) {
@@ -128,6 +138,7 @@ document.getElementById('signupForm').addEventListener('submit', function(e) {
     
     // Get users from localStorage
     const users = JSON.parse(localStorage.getItem('flavorlyUsers') || '[]');
+    console.log('Existing users before signup:', users);
     
     // Check if user already exists
     if (users.find(u => u.email === email)) {
@@ -145,8 +156,12 @@ document.getElementById('signupForm').addEventListener('submit', function(e) {
         savedRecipes: []
     };
     
+    console.log('Creating new user:', newUser);
+    
     users.push(newUser);
     localStorage.setItem('flavorlyUsers', JSON.stringify(users));
+    
+    console.log('Users after signup:', JSON.parse(localStorage.getItem('flavorlyUsers')));
     
     // Auto login
     currentUser = newUser;
