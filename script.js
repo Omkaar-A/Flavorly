@@ -56,7 +56,7 @@ function updateUIForLoggedInUser() {
                     <i class="fas fa-chevron-down ml-1 text-xs"></i>
                 </button>
                 <div class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
-                    <a href="#" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Profile</a>
+                    <a href="#" onclick="showProfileModal()" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Profile</a>
                     <a href="#" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Settings</a>
                     <hr class="my-1">
                     <a href="#" onclick="logout()" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Log Out</a>
@@ -64,6 +64,18 @@ function updateUIForLoggedInUser() {
             </div>
         `;
     }
+}
+
+// Handle forgot password
+function handleForgotPassword() {
+    const email = document.getElementById('loginEmail').value;
+    if (!email) {
+        showNotification('Please enter your email address first', 'error');
+        return;
+    }
+    
+    // In a real app, you'd send a reset email. For demo, we'll show a success message
+    showNotification(`Password reset link sent to ${email}. Check your inbox!`, 'success');
 }
 
 // Handle login
@@ -508,17 +520,102 @@ function displayRecipe(recipe) {
     resultDiv.scrollIntoView({ behavior: 'smooth' });
 }
 
-// Settings and API Key Management (Admin Only)
+// Profile management
+function showProfileModal() {
+    if (!currentUser) {
+        showNotification('Please log in to view your profile', 'info');
+        return;
+    }
+    
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center';
+    modal.innerHTML = `
+        <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">Profile Settings</h2>
+                <button onclick="closeProfileModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Name</label>
+                    <input type="text" id="profileName" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500" value="${currentUser.name}">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                    <input type="email" id="profileEmail" class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100" value="${currentUser.email}" disabled>
+                    <p class="text-xs text-gray-500 mt-1">Email cannot be changed</p>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Member Since</label>
+                    <input type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100" value="${new Date(currentUser.createdAt).toLocaleDateString()}" disabled>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Saved Recipes</label>
+                    <input type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100" value="${currentUser.savedRecipes?.length || 0} recipes" disabled>
+                </div>
+                
+                <button onclick="updateProfile()" class="w-full bg-orange-600 text-white py-3 rounded-lg font-semibold hover:bg-orange-700 transition-colors">
+                    Update Profile
+                </button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+}
+
+function closeProfileModal() {
+    const modal = document.querySelector('.fixed.inset-0');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+function updateProfile() {
+    const newName = document.getElementById('profileName').value;
+    
+    if (!newName.trim()) {
+        showNotification('Name cannot be empty', 'error');
+        return;
+    }
+    
+    // Update user data
+    const users = JSON.parse(localStorage.getItem('flavorlyUsers') || '[]');
+    const userIndex = users.findIndex(u => u.id === currentUser.id);
+    
+    if (userIndex !== -1) {
+        users[userIndex].name = newName;
+        localStorage.setItem('flavorlyUsers', JSON.stringify(users));
+        
+        // Update current user
+        currentUser.name = newName;
+        localStorage.setItem('flavorlyUser', JSON.stringify(currentUser));
+        
+        // Update UI
+        updateUIForLoggedInUser();
+        showNotification('Profile updated successfully!', 'success');
+        closeProfileModal();
+    }
+}
 function showSettingsModal() {
     // Debug: Show current user email
+    console.log('Current user:', currentUser);
     console.log('Current user email:', currentUser?.email);
     
     // Check if user is admin - you can modify this to match your email
     const adminEmails = ['admin@flavorly.com', 'omkaar@example.com', 'omkaar.anand@gmail.com']; // Add your email here
     const isAdmin = currentUser && adminEmails.includes(currentUser.email);
     
+    console.log('Is admin:', isAdmin);
+    
     if (!isAdmin) {
-        showNotification(`Only administrators can access AI settings. Current email: ${currentUser?.email}`, 'info');
+        showNotification(`Only administrators can access AI settings. Current email: ${currentUser?.email || 'Not logged in'}`, 'info');
         return;
     }
     
@@ -731,23 +828,22 @@ function toggleMobileMenu() {
 document.addEventListener('DOMContentLoaded', function() {
     initAuth(); // Initialize authentication system
     
-    // Update navigation to include settings for non-logged-in users
-    if (!currentUser) {
-        const navButtons = document.querySelector('nav .flex.space-x-4');
-        if (navButtons) {
-            navButtons.innerHTML = `
-                <button class="text-gray-600 hover:text-orange-600 transition-colors">Features</button>
-                <button class="text-gray-600 hover:text-orange-600 transition-colors">How it Works</button>
-                <button onclick="showSettingsModal()" class="text-gray-600 hover:text-orange-600 transition-colors">
-                    <i class="fas fa-cog"></i>
-                </button>
-                <button onclick="showLoginModal()" class="text-gray-600 hover:text-orange-600 transition-colors">Log In</button>
-                <button onclick="showSignupModal()" class="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors">
-                    Sign Up
-                </button>
-            `;
+    // Add event listeners for navigation buttons
+    document.addEventListener('click', function(e) {
+        if (e.target.matches('button')) {
+            const buttonText = e.target.textContent.trim();
+            if (buttonText === 'Features') {
+                e.preventDefault();
+                document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });
+            } else if (buttonText === 'How it Works') {
+                e.preventDefault();
+                document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' });
+            } else if (buttonText === 'My Recipes' && currentUser) {
+                e.preventDefault();
+                showNotification('My Recipes feature coming soon!', 'info');
+            }
         }
-    }
+    });
     
     console.log('Flavorly website loaded successfully!');
 });
