@@ -66,11 +66,30 @@ function updateUIForLoggedInUser() {
     }
 }
 
-// Handle forgot password
+// EmailJS Configuration - You need to set these up
+const EMAILJS_CONFIG = {
+    PUBLIC_KEY: '', // Add your EmailJS public key here
+    SERVICE_ID: '', // Add your EmailJS service ID here
+    TEMPLATE_ID: '' // Add your EmailJS template ID here
+};
+
+// Initialize EmailJS
+(function() {
+    emailjs.init("YOUR_PUBLIC_KEY"); // Replace with your actual public key
+})();
+
+// Handle forgot password with real email
 function handleForgotPassword() {
     const email = document.getElementById('loginEmail').value;
     if (!email) {
         showNotification('Please enter your email address first', 'error');
+        return;
+    }
+    
+    // Check if EmailJS is configured
+    if (!EMAILJS_CONFIG.PUBLIC_KEY || !EMAILJS_CONFIG.SERVICE_ID || !EMAILJS_CONFIG.TEMPLATE_ID) {
+        showNotification('EmailJS not configured. Please see setup instructions.', 'error');
+        showEmailSetupInstructions();
         return;
     }
     
@@ -87,8 +106,153 @@ function handleForgotPassword() {
     };
     localStorage.setItem('passwordResetTokens', JSON.stringify(resetTokens));
     
-    // Show email modal with the reset link
-    showEmailSentModal(email, resetLink);
+    // Send real email using EmailJS
+    sendPasswordResetEmail(email, resetLink);
+}
+
+function sendPasswordResetEmail(email, resetLink) {
+    showNotification('Sending password reset email...', 'info');
+    
+    const templateParams = {
+        to_email: email,
+        reset_link: resetLink,
+        from_name: 'Flavorly',
+        reply_to: 'noreply@flavorly.com'
+    };
+    
+    emailjs.send(EMAILJS_CONFIG.SERVICE_ID, EMAILJS_CONFIG.TEMPLATE_ID, templateParams)
+        .then(function(response) {
+            console.log('Email sent successfully!', response.status, response.text);
+            showNotification(`Password reset email sent to ${email}. Check your inbox!`, 'success');
+            showEmailSuccessMessage(email, resetLink);
+        }, function(error) {
+            console.log('Email failed to send...', error);
+            showNotification('Failed to send email. Please try again or contact support.', 'error');
+            // Fallback to simulated email
+            showEmailSentModal(email, resetLink);
+        });
+}
+
+function showEmailSetupInstructions() {
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center';
+    modal.innerHTML = `
+        <div class="bg-white rounded-2xl p-8 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">EmailJS Setup Required</h2>
+                <button onclick="closeEmailSetupModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <div class="space-y-6">
+                <div class="bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
+                    <p class="text-sm text-yellow-800">
+                        <i class="fas fa-exclamation-triangle mr-2"></i>
+                        To send real emails, you need to set up EmailJS. Follow these steps:
+                    </p>
+                </div>
+                
+                <div class="space-y-4">
+                    <div class="border-l-4 border-orange-500 pl-4">
+                        <h3 class="font-semibold text-gray-800 mb-2">Step 1: Create EmailJS Account</h3>
+                        <p class="text-gray-600 mb-2">Go to <a href="https://www.emailjs.com/" target="_blank" class="text-orange-600 hover:underline">emailjs.com</a> and sign up for a free account.</p>
+                    </div>
+                    
+                    <div class="border-l-4 border-orange-500 pl-4">
+                        <h3 class="font-semibold text-gray-800 mb-2">Step 2: Create Email Service</h3>
+                        <p class="text-gray-600 mb-2">Add an email service (Gmail, Outlook, etc.) in EmailJS dashboard.</p>
+                    </div>
+                    
+                    <div class="border-l-4 border-orange-500 pl-4">
+                        <h3 class="font-semibold text-gray-800 mb-2">Step 3: Create Email Template</h3>
+                        <p class="text-gray-600 mb-2">Create a template with these variables:</p>
+                        <code class="block bg-gray-100 p-2 rounded text-sm mt-2">
+                            {{to_email}}, {{reset_link}}, {{from_name}}, {{reply_to}}
+                        </code>
+                    </div>
+                    
+                    <div class="border-l-4 border-orange-500 pl-4">
+                        <h3 class="font-semibold text-gray-800 mb-2">Step 4: Get Your Keys</h3>
+                        <p class="text-gray-600 mb-2">Copy your Public Key, Service ID, and Template ID.</p>
+                    </div>
+                    
+                    <div class="border-l-4 border-orange-500 pl-4">
+                        <h3 class="font-semibold text-gray-800 mb-2">Step 5: Update Code</h3>
+                        <p class="text-gray-600 mb-2">Open script.js and update EMAILJS_CONFIG with your keys.</p>
+                    </div>
+                </div>
+                
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h3 class="font-semibold text-gray-800 mb-2">Sample Email Template:</h3>
+                    <pre class="text-sm text-gray-700 whitespace-pre-wrap">
+Hello,
+
+Click here to reset your password: {{reset_link}}
+
+This link expires in 1 hour.
+
+Best regards,
+{{from_name}} Team
+                    </pre>
+                </div>
+            </div>
+            
+            <div class="mt-6 flex justify-end">
+                <button onclick="closeEmailSetupModal()" class="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700">
+                    I Understand
+                </button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+}
+
+function closeEmailSetupModal() {
+    const modal = document.querySelector('.fixed.inset-0');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+function showEmailSuccessMessage(email, resetLink) {
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center';
+    modal.innerHTML = `
+        <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4">
+            <div class="text-center">
+                <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-check text-green-600 text-2xl"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">Email Sent Successfully!</h2>
+                <p class="text-gray-600 mb-6">
+                    We've sent a password reset link to:<br>
+                    <strong>${email}</strong>
+                </p>
+                <p class="text-gray-600 mb-6">
+                    Please check your inbox and spam folder. The link expires in 1 hour.
+                </p>
+                <div class="space-y-3">
+                    <button onclick="closeEmailSuccessModal()" class="w-full bg-orange-600 text-white py-3 rounded-lg font-semibold hover:bg-orange-700 transition-colors">
+                        Got it!
+                    </button>
+                    <button onclick="copyResetLink('${resetLink}')" class="w-full border border-orange-600 text-orange-600 py-3 rounded-lg font-semibold hover:bg-orange-50 transition-colors">
+                        Copy Reset Link
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+}
+
+function closeEmailSuccessModal() {
+    const modal = document.querySelector('.fixed.inset-0');
+    if (modal) {
+        modal.remove();
+    }
 }
 
 function generateResetToken() {
