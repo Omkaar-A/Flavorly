@@ -10,11 +10,13 @@ const recipeDatabase = [
     {
         name: "Mediterranean Chicken Bowl",
         ingredients: ["chicken", "tomatoes", "rice"],
+        dishTypes: ["bowl", "chicken", "healthy"],
         dietary: "",
         cuisine: "mediterranean",
         flavor: ["savory"],
         time: "30 mins",
         difficulty: "Easy",
+        healthStatus: "healthy",
         description: "A healthy and flavorful Mediterranean-inspired bowl with grilled chicken, fresh vegetables, and aromatic rice.",
         instructions: [
             "Season chicken with olive oil, lemon juice, garlic, and herbs",
@@ -28,11 +30,13 @@ const recipeDatabase = [
     {
         name: "Spicy Vegetable Stir-Fry",
         ingredients: ["vegetables", "rice"],
+        dishTypes: ["stir-fry", "asian", "vegetables"],
         dietary: "vegan",
         cuisine: "asian",
         flavor: ["spicy", "savory"],
         time: "20 mins",
         difficulty: "Easy",
+        healthStatus: "healthy",
         description: "A quick and spicy Asian-inspired stir-fry packed with colorful vegetables and bold flavors.",
         instructions: [
             "Heat wok or large pan over high heat",
@@ -46,11 +50,13 @@ const recipeDatabase = [
     {
         name: "Classic Margherita Pizza",
         ingredients: ["tomatoes", "cheese"],
+        dishTypes: ["pizza", "italian", "cheese"],
         dietary: "vegetarian",
         cuisine: "italian",
         flavor: ["savory", "tangy"],
         time: "45 mins",
         difficulty: "Medium",
+        healthStatus: "healthy",
         description: "A traditional Italian pizza with fresh tomatoes, mozzarella, and basil on a crispy crust.",
         instructions: [
             "Prepare pizza dough and let it rise",
@@ -60,6 +66,86 @@ const recipeDatabase = [
             "Bake at 475°F for 12-15 minutes",
             "Top with fresh basil before serving"
         ]
+    },
+    {
+        name: "Healing Chicken Soup",
+        ingredients: ["chicken", "vegetables"],
+        dishTypes: ["soup", "chicken", "comfort"],
+        dietary: "",
+        cuisine: "",
+        flavor: ["savory"],
+        time: "60 mins",
+        difficulty: "Easy",
+        healthStatus: "sick",
+        description: "A nourishing chicken soup packed with vegetables and herbs to help you feel better when you're under the weather.",
+        instructions: [
+            "Bring chicken broth to a simmer in a large pot",
+            "Add chicken pieces and cook for 20 minutes",
+            "Add chopped vegetables like carrots, celery, and onions",
+            "Simmer for 30 minutes until vegetables are tender",
+            "Add garlic, ginger, and herbs for immune support",
+            "Season with salt and pepper and serve hot"
+        ]
+    },
+    {
+        name: "Ginger Tea with Honey",
+        ingredients: ["ginger", "honey", "lemon"],
+        dishTypes: ["tea", "drink", "remedy"],
+        dietary: "vegan",
+        cuisine: "",
+        flavor: ["tangy", "sweet"],
+        time: "10 mins",
+        difficulty: "Easy",
+        healthStatus: "sick",
+        description: "A soothing ginger tea with honey and lemon to relieve cold symptoms and boost your immune system.",
+        instructions: [
+            "Boil water in a small pot",
+            "Add fresh ginger slices and simmer for 5 minutes",
+            "Remove from heat and add lemon juice",
+            "Stir in honey to taste",
+            "Pour into a mug and sip while warm",
+            "Rest and enjoy the soothing effects"
+        ]
+    },
+    {
+        name: "Simple Pasta Aglio e Olio",
+        ingredients: ["pasta", "garlic", "olive oil"],
+        dishTypes: ["pasta", "italian", "simple"],
+        dietary: "vegan",
+        cuisine: "italian",
+        flavor: ["savory"],
+        time: "25 mins",
+        difficulty: "Easy",
+        healthStatus: "healthy",
+        description: "Classic Italian pasta with garlic and olive oil - simple, elegant, and delicious.",
+        instructions: [
+            "Cook pasta according to package directions",
+            "Heat olive oil in a pan over medium heat",
+            "Add sliced garlic and cook until fragrant",
+            "Add red pepper flakes for a little heat",
+            "Toss cooked pasta with garlic oil",
+            "Season with salt and parsley"
+        ]
+    },
+    {
+        name: "Fresh Garden Salad",
+        ingredients: ["vegetables", "lettuce"],
+        dishTypes: ["salad", "fresh", "healthy"],
+        dietary: "vegan",
+        cuisine: "",
+        flavor: ["fresh", "tangy"],
+        time: "15 mins",
+        difficulty: "Easy",
+        healthStatus: "healthy",
+        description: "A crisp, refreshing salad with mixed greens and fresh vegetables.",
+        instructions: [
+            "Wash and dry mixed greens",
+            "Chop fresh vegetables like tomatoes, cucumbers, and bell peppers",
+            "Toss greens and vegetables in a large bowl",
+            "Drizzle with olive oil and lemon juice",
+            "Season with salt and pepper",
+            "Top with fresh herbs if desired"
+        ]
     }
 ];
 
@@ -68,13 +154,15 @@ document.getElementById('recipe-form').addEventListener('submit', function(e) {
     e.preventDefault();
     
     const ingredients = document.getElementById('ingredients').value.toLowerCase().split(',').map(i => i.trim());
+    const dishType = document.getElementById('dish-type').value.toLowerCase();
+    const healthStatus = document.querySelector('input[name="health-status"]:checked').value;
     const dietary = document.getElementById('dietary').value;
     const cuisine = document.getElementById('cuisine').value;
     const flavorCheckboxes = document.querySelectorAll('input[type="checkbox"]:checked');
     const flavors = Array.from(flavorCheckboxes).map(cb => cb.value);
     
     // Find matching recipe
-    const recipe = findBestRecipe(ingredients, dietary, cuisine, flavors);
+    const recipe = findBestRecipe(ingredients, dishType, healthStatus, dietary, cuisine, flavors);
     
     if (recipe) {
         displayRecipe(recipe);
@@ -83,12 +171,29 @@ document.getElementById('recipe-form').addEventListener('submit', function(e) {
     }
 });
 
-function findBestRecipe(ingredients, dietary, cuisine, flavors) {
+function findBestRecipe(ingredients, dishType, healthStatus, dietary, cuisine, flavors) {
     let bestMatch = null;
     let bestScore = 0;
     
     recipeDatabase.forEach(recipe => {
         let score = 0;
+        
+        // Health status is most important - if sick, prioritize sick-friendly recipes
+        if (healthStatus === 'sick' && recipe.healthStatus === 'sick') {
+            score += 10;
+        } else if (healthStatus === 'healthy' && recipe.healthStatus === 'healthy') {
+            score += 5;
+        }
+        
+        // Check dish type match
+        if (dishType) {
+            const matchingDishType = recipe.dishTypes.some(type => 
+                type.includes(dishType) || dishType.includes(type)
+            );
+            if (matchingDishType) {
+                score += 8;
+            }
+        }
         
         // Check ingredients match
         const matchingIngredients = ingredients.filter(ing => 
@@ -126,6 +231,10 @@ function displayRecipe(recipe) {
     const resultDiv = document.getElementById('recipe-result');
     const contentDiv = document.getElementById('recipe-content');
     
+    const healthBadge = recipe.healthStatus === 'sick' ? 
+        '<span class="bg-red-100 text-red-800 px-3 py-1 rounded-full"><i class="fas fa-heartbeat mr-1"></i>Comfort Food</span>' : 
+        '<span class="bg-green-100 text-green-800 px-3 py-1 rounded-full"><i class="fas fa-heart mr-1"></i>Healthy</span>';
+    
     contentDiv.innerHTML = `
         <div class="bg-gradient-to-r from-purple-50 to-blue-50 p-6 rounded-lg mb-6">
             <h4 class="text-2xl font-bold text-gray-800 mb-2">${recipe.name}</h4>
@@ -138,8 +247,9 @@ function displayRecipe(recipe) {
                     <i class="fas fa-signal mr-1"></i> ${recipe.difficulty}
                 </span>
                 <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full">
-                    <i class="fas fa-globe mr-1"></i> ${recipe.cuisine}
+                    <i class="fas fa-globe mr-1"></i> ${recipe.cuisine || 'Universal'}
                 </span>
+                ${healthBadge}
                 ${recipe.dietary ? `<span class="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full">
                     <i class="fas fa-leaf mr-1"></i> ${recipe.dietary}
                 </span>` : ''}
@@ -161,6 +271,18 @@ function displayRecipe(recipe) {
                 `).join('')}
             </ol>
         </div>
+        
+        ${recipe.healthStatus === 'sick' ? `
+        <div class="bg-blue-50 border border-blue-200 p-4 rounded-lg mb-6">
+            <h5 class="font-semibold text-blue-800 mb-2">
+                <i class="fas fa-medical-kit mr-2"></i>Health Benefits
+            </h5>
+            <p class="text-blue-700 text-sm">
+                This recipe is designed to be gentle on your system and may help with recovery. 
+                The ingredients provide essential nutrients and soothing properties to help you feel better.
+            </p>
+        </div>
+        ` : ''}
         
         <div class="flex gap-4">
             <button onclick="saveRecipe('${recipe.name}')" class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors">
