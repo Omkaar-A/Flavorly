@@ -28,8 +28,8 @@ jobs:
       env:
         GEMMA_API_KEY: ${{ secrets.GEMMA_API_KEY }}
       run: |
-        # Replace empty API key with secret
-        sed -i "s/apiKey: process.env.GEMMA_API_KEY || ''/apiKey: '$GEMMA_API_KEY'/" script.js
+        # Replace environment variable with actual secret value
+        sed -i "s/process.env.GEMMA_API_KEY || ''/\'$GEMMA_API_KEY\'/" script.js
         echo "✅ API key added successfully!"
         
     - name: Upload artifact
