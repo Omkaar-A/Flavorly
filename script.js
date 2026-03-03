@@ -610,7 +610,7 @@ function showRecipeGenerator() {
 const AI_CONFIG = {
     gemma: {
         apiKey: 'AIzaSyA6cdSKkXZi8QPzixkJJQpxlk27beWh09E', // Add your Google AI Studio API key here
-        endpoint: 'https://generativelanguage.googleapis.com/v1beta/models/gemma-3-27b:generateContent',
+        endpoint: 'https://generativelanguage.googleapis.com/v1/models/gemma-3-27b:generateContent',
         model: 'gemma-3-27b'
     }
 };
