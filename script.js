@@ -625,20 +625,39 @@ function areApiKeysConfigured() {
 
 // AI Recipe Generation
 async function generateRecipeWithAI(ingredients, dishType, healthStatus, dietary, cuisine, flavors, aiModel) {
+    console.log('=== RECIPE GENERATION DEBUG ===');
+    console.log('Ingredients:', ingredients);
+    console.log('Dish Type:', dishType);
+    console.log('Health Status:', healthStatus);
+    console.log('Dietary:', dietary);
+    console.log('Cuisine:', cuisine);
+    console.log('Flavors:', flavors);
+    console.log('AI Model:', aiModel);
+    
     const modelConfig = AI_CONFIG.gemma;
     
     if (!modelConfig.apiKey) {
+        console.error('❌ Gemma API key not configured');
         showNotification('Gemma API key not configured. Contact admin to set up AI models.', 'error');
         return null;
     }
     
+    console.log('✅ API Key found, proceeding...');
     const prompt = createRecipePrompt(ingredients, dishType, healthStatus, dietary, cuisine, flavors);
+    console.log('Generated prompt length:', prompt.length);
     
     try {
+        console.log('🚀 Calling Gemma API...');
         const response = await callGemmaAPI(modelConfig, prompt);
-        return parseAIResponse(response, 'gemma', healthStatus, dietary, cuisine, flavors);
+        console.log('✅ API call successful, parsing response...');
+        
+        const recipe = parseAIResponse(response, 'gemma', healthStatus, dietary, cuisine, flavors);
+        console.log('✅ Recipe parsed:', recipe);
+        
+        return recipe;
     } catch (error) {
-        console.error('AI API Error:', error);
+        console.error('❌ AI API Error:', error);
+        console.error('Error details:', error.message);
         showNotification('Failed to generate recipe. Please try again or contact admin.', 'error');
         return null;
     }
@@ -673,26 +692,54 @@ Make sure the recipe is practical, matches all preferences exactly, and provides
 }
 
 async function callGemmaAPI(config, prompt) {
-    const response = await fetch(`${config.endpoint}?key=${config.apiKey}`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            contents: [{
-                parts: [{
-                    text: prompt
-                }]
-            }],
-            generationConfig: {
-                temperature: 0.7,
-                maxOutputTokens: 1000
-            }
-        })
-    });
+    console.log('=== GEMMA API DEBUG ===');
+    console.log('Endpoint:', config.endpoint);
+    console.log('API Key:', config.apiKey ? 'Set' : 'Not set');
+    console.log('Prompt:', prompt);
     
-    const data = await response.json();
-    return data.candidates[0].content.parts[0].text;
+    try {
+        const response = await fetch(`${config.endpoint}?key=${config.apiKey}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                contents: [{
+                    parts: [{
+                        text: prompt
+                    }]
+                }],
+                generationConfig: {
+                    temperature: 0.7,
+                    maxOutputTokens: 1000
+                }
+            })
+        });
+        
+        console.log('Response status:', response.status);
+        console.log('Response headers:', response.headers);
+        
+        const data = await response.json();
+        console.log('Response data:', data);
+        
+        if (data.error) {
+            console.error('API Error:', data.error);
+            throw new Error(data.error.message || 'API Error');
+        }
+        
+        if (!data.candidates || data.candidates.length === 0) {
+            console.error('No candidates in response');
+            throw new Error('No recipe generated');
+        }
+        
+        const result = data.candidates[0].content.parts[0].text;
+        console.log('Generated text:', result);
+        
+        return result;
+    } catch (error) {
+        console.error('Gemma API call failed:', error);
+        throw error;
+    }
 }
 
 function parseAIResponse(response, aiModel, healthStatus, dietary, cuisine, flavors) {
