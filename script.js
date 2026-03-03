@@ -735,7 +735,6 @@ document.getElementById('recipe-form').addEventListener('submit', async function
     const ingredients = ingredientsInput ? ingredientsInput.toLowerCase().split(',').map(i => i.trim()).filter(i => i) : [];
     const dishType = document.getElementById('dish-type').value.toLowerCase();
     const healthStatus = document.querySelector('input[name="health-status"]:checked').value;
-    const aiModel = document.getElementById('ai-model').value;
     const dietary = document.getElementById('dietary').value;
     const cuisine = document.getElementById('cuisine').value;
     const flavorCheckboxes = document.querySelectorAll('input[type="checkbox"]:checked');
@@ -744,8 +743,8 @@ document.getElementById('recipe-form').addEventListener('submit', async function
     // Show loading state
     showRecipeLoading();
     
-    // Generate recipe with AI
-    const recipe = await generateRecipeWithAI(ingredients, dishType, healthStatus, dietary, cuisine, flavors, aiModel);
+    // Generate recipe with AI (always use Gemma)
+    const recipe = await generateRecipeWithAI(ingredients, dishType, healthStatus, dietary, cuisine, flavors, 'gemma');
     
     if (recipe) {
         displayRecipe(recipe);
