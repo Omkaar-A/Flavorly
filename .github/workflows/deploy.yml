@@ -1,0 +1,51 @@
+name: Deploy and Inject API Keys
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        
+    - name: Create API key injection script
+      run: |
+        cat > inject-keys.js << 'EOF'
+        const fs = require('fs');
+        
+        // Read the script.js file
+        let scriptContent = fs.readFileSync('script.js', 'utf8');
+        
+        // Replace the empty API key with the environment variable
+        scriptContent = scriptContent.replace(
+          "apiKey: '', // Add your Google AI Studio API key here",
+          `apiKey: '${process.env.GEMMA_API_KEY}', // Injected from GitHub Secrets`
+        );
+        
+        // Write the modified script back
+        fs.writeFileSync('script.js', scriptContent);
+        
+        console.log('API key injected successfully');
+        EOF
+        
+    - name: Inject API key
+      env:
+        GEMMA_API_KEY: ${{ secrets.GEMMA_API_KEY }}
+      run: node inject-keys.js
+      
+    - name: Deploy to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v3
+      if: github.ref == 'refs/heads/main'
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: .
