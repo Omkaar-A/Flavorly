@@ -4,7 +4,7 @@ Flavorly is an AI-powered recipe platform that creates personalized meals based 
 
 ## 🚀 Features
 
-- **AI Recipe Generation** - Powered by Gemma 3 27B from Google AI Studio
+- **AI Recipe Generation** - Powered by Gemma 2 27B from Google AI Studio
 - **Personalized Recommendations** - Based on dietary preferences, health status, and cuisine
 - **Optional Ingredients** - Generate recipes with or without specific ingredients
 - **User Authentication** - Sign up, login, and profile management
@@ -20,7 +20,7 @@ Only administrators need to configure AI API keys. All users share these keys.
 
 #### Step 1: Get API Key
 
-**Gemma 3 27B AI:**
+**Gemma 2 27B AI:**
 1. Go to [aistudio.google.com](https://aistudio.google.com)
 2. Sign up and create an API key
 3. Copy your key (starts with `AIza`)
@@ -33,8 +33,8 @@ Open `script.js` and find the `AI_CONFIG` object (around line 610):
 const AI_CONFIG = {
     gemma: {
         apiKey: 'YOUR_GEMMA_API_KEY_HERE', // Add your Gemma API key
-        endpoint: 'https://generativelanguage.googleapis.com/v1beta/models/gemma-3-27b:generateContent',
-        model: 'gemma-3-27b'
+        endpoint: 'https://generativelanguage.googleapis.com/v1beta/models/gemma-2-27b-it:generateContent',
+        model: 'gemma-2-27b-it'
     }
 };
 ```
@@ -129,7 +129,7 @@ const adminEmails = ['admin@flavorly.com', 'omkaar.anand@gmail.com', 'another_ad
 ## 🔧 Technical Details
 
 - **Frontend:** HTML, CSS, JavaScript (TailwindCSS)
-- **AI Model:** Gemma 3 27B (Google AI Studio)
+- **AI Model:** Gemma 2 27B (Google AI Studio)
 - **Email Service:** EmailJS
 - **Storage:** Browser localStorage
 - **Authentication:** Frontend-only with localStorage

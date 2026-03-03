@@ -610,8 +610,8 @@ function showRecipeGenerator() {
 const AI_CONFIG = {
     gemma: {
         apiKey: 'AIzaSyA6cdSKkXZi8QPzixkJJQpxlk27beWh09E', // Add your Google AI Studio API key here
-        endpoint: 'https://generativelanguage.googleapis.com/v1/models/gemma-3-27b:generateContent',
-        model: 'gemma-3-27b'
+        endpoint: 'https://generativelanguage.googleapis.com/v1beta/models/gemma-2-27b-it:generateContent',
+        model: 'gemma-2-27b-it'
     }
 };
 
@@ -1041,7 +1041,7 @@ function showSettingsModal() {
             
             <div class="space-y-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Gemma 3 27B API Key</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Gemma 2 27B API Key</label>
                     <input type="password" id="gemmaApiKey" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500" placeholder="AIza...">
                     <p class="text-xs text-gray-500 mt-1">Get your key from <a href="https://aistudio.google.com" target="_blank" class="text-orange-600 hover:underline">Google AI Studio</a></p>
                 </div>
