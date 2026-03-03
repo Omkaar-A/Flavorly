@@ -1,4 +1,4 @@
-name: Make Recipes Work!
+name: Deploy Website
 
 on:
   push:
@@ -8,24 +8,35 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     
     steps:
-    - name: Get your code
+    - name: Checkout
       uses: actions/checkout@v4
       
-    - name: Put secret key in code
-      env:
-        SECRET_KEY: ${{ secrets.GEMMA_API_KEY }}
-      run: |
-        # Replace empty key with your secret key
-        sed -i "s/apiKey: '', \/\/ Your secret key is hidden in GitHub Secrets!/apiKey: '$SECRET_KEY', \/\/ Your secret key is now loaded!/" script.js
-        
-        # Show it worked!
-        echo "✅ Secret key added!"
-        grep "apiKey:" script.js
+    - name: Setup Pages
+      uses: actions/configure-pages@v4
       
-    - name: Put on internet
-      uses: peaceiris/actions-gh-pages@v3
+    - name: Add API Key
+      env:
+        GEMMA_API_KEY: ${{ secrets.GEMMA_API_KEY }}
+      run: |
+        # Replace empty API key with secret
+        sed -i "s/apiKey: process.env.GEMMA_API_KEY || ''/apiKey: '$GEMMA_API_KEY'/" script.js
+        echo "✅ API key added successfully!"
+        
+    - name: Upload artifact
+      uses: actions/upload-pages-artifact@v3
       with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: .
+        path: '.'
+        
+    - name: Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v4
