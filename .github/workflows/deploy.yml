@@ -18,30 +18,16 @@ jobs:
       with:
         node-version: '18'
         
-    - name: Create API key injection script
-      run: |
-        cat > inject-keys.js << 'EOF'
-        const fs = require('fs');
-        
-        // Read the script.js file
-        let scriptContent = fs.readFileSync('script.js', 'utf8');
-        
-        // Replace the empty API key with the environment variable
-        scriptContent = scriptContent.replace(
-          "apiKey: '', // Add your Google AI Studio API key here",
-          `apiKey: '${process.env.GEMMA_API_KEY}', // Injected from GitHub Secrets`
-        );
-        
-        // Write the modified script back
-        fs.writeFileSync('script.js', scriptContent);
-        
-        console.log('API key injected successfully');
-        EOF
-        
     - name: Inject API key
       env:
         GEMMA_API_KEY: ${{ secrets.GEMMA_API_KEY }}
-      run: node inject-keys.js
+      run: |
+        # Read the script.js file
+        sed -i "s/apiKey: '', \/\/ Add your Google AI Studio API key here/apiKey: '$GEMMA_API_KEY', \/\/ Injected from GitHub Secrets/" script.js
+        
+        # Verify the injection worked
+        echo "API key injection completed"
+        grep -n "apiKey:" script.js | head -1
       
     - name: Deploy to GitHub Pages
       uses: peaceiris/actions-gh-pages@v3
