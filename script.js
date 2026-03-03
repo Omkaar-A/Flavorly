@@ -698,26 +698,31 @@ async function callGemmaAPI(config, prompt) {
     console.log('Prompt:', prompt);
     
     try {
-        const response = await fetch(`${config.endpoint}?key=${config.apiKey}`, {
+        const requestBody = {
+            contents: [{
+                parts: [{
+                    text: prompt
+                }]
+            }],
+            generationConfig: {
+                temperature: 0.7,
+                maxOutputTokens: 1000
+            }
+        };
+        
+        console.log('Request body:', JSON.stringify(requestBody, null, 2));
+        
+        const response = await fetch(config.endpoint, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'x-goog-api-key': config.apiKey
             },
-            body: JSON.stringify({
-                contents: [{
-                    parts: [{
-                        text: prompt
-                    }]
-                }],
-                generationConfig: {
-                    temperature: 0.7,
-                    maxOutputTokens: 1000
-                }
-            })
+            body: JSON.stringify(requestBody)
         });
         
         console.log('Response status:', response.status);
-        console.log('Response headers:', response.headers);
+        console.log('Response headers:', Object.fromEntries(response.headers.entries()));
         
         const data = await response.json();
         console.log('Response data:', data);
@@ -738,6 +743,7 @@ async function callGemmaAPI(config, prompt) {
         return result;
     } catch (error) {
         console.error('Gemma API call failed:', error);
+        console.error('Error stack:', error.stack);
         throw error;
     }
 }
