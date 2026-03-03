@@ -49,7 +49,7 @@
   <path d="M17 6 Q18 4, 19 6 T21 6" stroke="white" stroke-width="1" fill="none" opacity="0.6"/>
   
   <!-- Flavorly text -->
-  <text x="16" y="26" font-family="Arial, sans-serif" font-size="5" font-weight="bold" text-anchor="middle" fill="white">FLAVORLY</text>
+  <text x="16" y="26" font-family="Arial, sans-serif" font-size="4" font-weight="bold" text-anchor="middle" fill="white">FLAVORLY</text>
   
   <!-- Taste buds/sparkles -->
   <circle cx="5" cy="5" r="0.4" fill="white" opacity="0.9"/>
