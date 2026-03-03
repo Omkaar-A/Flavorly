@@ -608,60 +608,35 @@ function showRecipeGenerator() {
 
 // AI Configuration - Admin keys (only you need to set these)
 const AI_CONFIG = {
-    claude: {
-        apiKey: '', // Add your Claude API key here
-        endpoint: 'https://api.anthropic.com/v1/messages',
-        model: 'claude-3-haiku-20240307'
-    },
-    grok: {
-        apiKey: '', // Add your Grok API key here
-        endpoint: 'https://api.x.ai/v1/chat/completions',
-        model: 'grok-beta'
-    },
-    mistral: {
-        apiKey: '', // Add your Mistral AI API key here
-        endpoint: 'https://api.mistral.ai/v1/chat/completions',
-        model: 'mistral-small-latest'
+    gemma: {
+        apiKey: '', // Add your Google AI Studio API key here
+        endpoint: 'https://generativelanguage.googleapis.com/v1beta/models/gemma-3-27b:generateContent',
+        model: 'gemma-3-27b'
     }
 };
 
 // Current AI model preference
-let currentAIModel = 'claude'; // Default to Claude
+let currentAIModel = 'gemma'; // Default to Gemma
 
 // Check if API keys are configured
 function areApiKeysConfigured() {
-    return AI_CONFIG.claude.apiKey || AI_CONFIG.grok.apiKey || AI_CONFIG.mistral.apiKey;
+    return AI_CONFIG.gemma.apiKey;
 }
 
 // AI Recipe Generation
 async function generateRecipeWithAI(ingredients, dishType, healthStatus, dietary, cuisine, flavors, aiModel) {
-    const modelConfig = AI_CONFIG[aiModel];
+    const modelConfig = AI_CONFIG.gemma;
     
     if (!modelConfig.apiKey) {
-        showNotification(`${aiModel.charAt(0).toUpperCase() + aiModel.slice(1)} API key not configured. Contact admin to set up AI models.`, 'error');
+        showNotification('Gemma API key not configured. Contact admin to set up AI models.', 'error');
         return null;
     }
-
+    
     const prompt = createRecipePrompt(ingredients, dishType, healthStatus, dietary, cuisine, flavors);
     
     try {
-        let response;
-        
-        switch(aiModel) {
-            case 'claude':
-                response = await callClaudeAPI(modelConfig, prompt);
-                break;
-            case 'grok':
-                response = await callGrokAPI(modelConfig, prompt);
-                break;
-            case 'mistral':
-                response = await callMistralAPI(modelConfig, prompt);
-                break;
-            default:
-                throw new Error('Unsupported AI model');
-        }
-        
-        return parseAIResponse(response, aiModel, healthStatus, dietary, cuisine, flavors);
+        const response = await callGemmaAPI(modelConfig, prompt);
+        return parseAIResponse(response, 'gemma', healthStatus, dietary, cuisine, flavors);
     } catch (error) {
         console.error('AI API Error:', error);
         showNotification('Failed to generate recipe. Please try again or contact admin.', 'error');
@@ -697,68 +672,27 @@ Please respond with a JSON object in this exact format:
 Make sure the recipe is practical, matches all preferences exactly, and provides clear cooking instructions.`;
 }
 
-async function callClaudeAPI(config, prompt) {
-    const response = await fetch(config.endpoint, {
+async function callGemmaAPI(config, prompt) {
+    const response = await fetch(`${config.endpoint}?key=${config.apiKey}`, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json',
-            'x-api-key': config.apiKey,
-            'anthropic-version': '2023-06-01'
+            'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-            model: config.model,
-            max_tokens: 1000,
-            messages: [{
-                role: 'user',
-                content: prompt
-            }]
-        })
-    });
-    
-    const data = await response.json();
-    return data.content[0].text;
-}
-
-async function callGrokAPI(config, prompt) {
-    const response = await fetch(config.endpoint, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${config.apiKey}`
-        },
-        body: JSON.stringify({
-            model: config.model,
-            messages: [{
-                role: 'user',
-                content: prompt
+            contents: [{
+                parts: [{
+                    text: prompt
+                }]
             }],
-            max_tokens: 1000
+            generationConfig: {
+                temperature: 0.7,
+                maxOutputTokens: 1000
+            }
         })
     });
     
     const data = await response.json();
-    return data.choices[0].message.content;
-}
-
-async function callMistralAPI(config, prompt) {
-    const response = await fetch(config.endpoint, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${config.apiKey}`
-        },
-        body: JSON.stringify({
-            model: config.model,
-            messages: [{
-                role: 'user',
-                content: prompt
-            }],
-            max_tokens: 1000
-        })
-    });
-    
-    const data = await response.json();
-    return data.choices[0].message.content;
+    return data.candidates[0].content.parts[0].text;
 }
 
 function parseAIResponse(response, aiModel, healthStatus, dietary, cuisine, flavors) {
@@ -1049,31 +983,19 @@ function showSettingsModal() {
             <div class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                 <p class="text-sm text-blue-800">
                     <i class="fas fa-info-circle mr-2"></i>
-                    These API keys will be used by all users. Keep them secure!
+                    This API key will be used by all users. Keep it secure!
                 </p>
             </div>
             
             <div class="space-y-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Claude API Key</label>
-                    <input type="password" id="claudeApiKey" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500" placeholder="sk-ant-...">
-                    <p class="text-xs text-gray-500 mt-1">Get your key from console.anthropic.com</p>
-                </div>
-                
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Grok API Key</label>
-                    <input type="password" id="grokApiKey" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500" placeholder="xai-...">
-                    <p class="text-xs text-gray-500 mt-1">Get your key from console.x.ai</p>
-                </div>
-                
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Mistral AI API Key</label>
-                    <input type="password" id="mistralApiKey" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500" placeholder="...">
-                    <p class="text-xs text-gray-500 mt-1">Get your key from console.mistral.ai</p>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Gemma 3 27B API Key</label>
+                    <input type="password" id="gemmaApiKey" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500" placeholder="AIza...">
+                    <p class="text-xs text-gray-500 mt-1">Get your key from <a href="https://aistudio.google.com" target="_blank" class="text-orange-600 hover:underline">Google AI Studio</a></p>
                 </div>
                 
                 <button onclick="saveApiKeys()" class="w-full bg-orange-600 text-white py-3 rounded-lg font-semibold hover:bg-orange-700 transition-colors">
-                    Save API Keys
+                    Save API Key
                 </button>
             </div>
         </div>
@@ -1081,10 +1003,8 @@ function showSettingsModal() {
     
     document.body.appendChild(modal);
     
-    // Load existing keys
-    document.getElementById('claudeApiKey').value = AI_CONFIG.claude.apiKey || '';
-    document.getElementById('grokApiKey').value = AI_CONFIG.grok.apiKey || '';
-    document.getElementById('mistralApiKey').value = AI_CONFIG.mistral.apiKey || '';
+    // Load existing key
+    document.getElementById('gemmaApiKey').value = AI_CONFIG.gemma.apiKey || '';
 }
 
 function closeSettingsModal() {
@@ -1095,11 +1015,9 @@ function closeSettingsModal() {
 }
 
 function saveApiKeys() {
-    AI_CONFIG.claude.apiKey = document.getElementById('claudeApiKey').value;
-    AI_CONFIG.grok.apiKey = document.getElementById('grokApiKey').value;
-    AI_CONFIG.mistral.apiKey = document.getElementById('mistralApiKey').value;
+    AI_CONFIG.gemma.apiKey = document.getElementById('gemmaApiKey').value;
     
-    showNotification('API keys saved successfully! All users can now use AI models.', 'success');
+    showNotification('Gemma API key saved successfully! All users can now use AI recipe generation.', 'success');
     closeSettingsModal();
 }
 
