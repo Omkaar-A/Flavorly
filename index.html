@@ -29,6 +29,67 @@
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
         }
+        
+        /* Enhanced Mobile Styles */
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 2.5rem !important;
+                line-height: 1.2 !important;
+            }
+            
+            .mobile-menu-hidden {
+                display: none !important;
+            }
+            
+            .mobile-menu-shown {
+                display: block !important;
+            }
+            
+            .mobile-nav-buttons {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            
+            .mobile-hero-padding {
+                padding: 4rem 1rem !important;
+            }
+            
+            .mobile-text-sm {
+                font-size: 0.875rem !important;
+            }
+            
+            .mobile-button-full {
+                width: 100% !important;
+                margin-bottom: 0.5rem;
+            }
+        }
+        
+        /* App Store Buttons */
+        .app-store-button {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin: 0.5rem;
+        }
+        
+        .app-store-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .ios-button {
+            background: #000;
+            color: white;
+        }
+        
+        .android-button {
+            background: #3DDC84;
+            color: #000;
+        }
     </style>
 </head>
 <body class="bg-gray-50">
@@ -61,7 +122,7 @@
 
     <!-- Hero Section -->
     <section class="relative overflow-hidden">
-        <div class="gradient-bg text-white py-32 relative">
+        <div class="gradient-bg text-white py-12 md:py-32 relative mobile-hero-padding">
             <!-- Animated background elements -->
             <div class="absolute inset-0 overflow-hidden">
                 <div class="absolute -top-10 -left-10 w-40 h-40 bg-white opacity-10 rounded-full animate-pulse"></div>
@@ -76,7 +137,7 @@
                         <span class="text-sm font-medium">AI-Powered • Personalized • Instant</span>
                     </div>
                     
-                    <h1 class="text-6xl font-bold mb-6 leading-tight">
+                    <h1 class="text-4xl md:text-6xl font-bold mb-6 leading-tight hero-title">
                         Stop Searching.
                         <br>
                         <span class="text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-orange-300">
@@ -99,19 +160,37 @@
                     </div>
                     
                     <!-- Trust indicators -->
-                    <div class="flex justify-center space-x-8 text-white/80">
+                    <div class="flex justify-center space-x-4 md:space-x-8 text-white/80 mb-8">
                         <div class="text-center">
-                            <div class="text-3xl font-bold text-white">50K+</div>
-                            <div class="text-sm">Happy Cooks</div>
+                            <div class="text-2xl md:text-3xl font-bold text-white">50K+</div>
+                            <div class="text-xs md:text-sm">Happy Cooks</div>
                         </div>
                         <div class="text-center">
-                            <div class="text-3xl font-bold text-white">1M+</div>
-                            <div class="text-sm">Recipes Created</div>
+                            <div class="text-2xl md:text-3xl font-bold text-white">1M+</div>
+                            <div class="text-xs md:text-sm">Recipes Created</div>
                         </div>
                         <div class="text-center">
-                            <div class="text-3xl font-bold text-white">4.9★</div>
-                            <div class="text-sm">User Rating</div>
+                            <div class="text-2xl md:text-3xl font-bold text-white">4.9★</div>
+                            <div class="text-xs md:text-sm">User Rating</div>
                         </div>
+                    </div>
+                    
+                    <!-- App Download Buttons -->
+                    <div class="flex flex-col sm:flex-row justify-center items-center gap-4 mt-8">
+                        <a href="#" class="app-store-button ios-button">
+                            <i class="fab fa-apple text-2xl mr-3"></i>
+                            <div class="text-left">
+                                <div class="text-xs">Download on the</div>
+                                <div class="text-lg font-semibold">App Store</div>
+                            </div>
+                        </a>
+                        <a href="#" class="app-store-button android-button">
+                            <i class="fab fa-google-play text-2xl mr-3"></i>
+                            <div class="text-left">
+                                <div class="text-xs">Get it on</div>
+                                <div class="text-lg font-semibold">Google Play</div>
+                            </div>
+                        </a>
                     </div>
                 </div>
             </div>
