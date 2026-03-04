@@ -343,37 +343,42 @@ function handleSignup(e) {
         return;
     }
     
-    // Create new user
-    const newUser = {
-        id: Date.now().toString(),
+    // Generate verification code
+    const verificationCode = generateVerificationCode();
+    
+    // Store pending verification data
+    const verificationData = {
         name: name,
         email: email,
-        password: password, // In production, this should be hashed
-        createdAt: new Date().toISOString(),
-        preferences: {
-            dietary: '',
-            cuisine: '',
-            flavors: []
-        },
-        savedRecipes: []
+        password: password,
+        code: verificationCode,
+        type: 'signup',
+        expiresAt: Date.now() + EMAIL_VERIFICATION.CODE_EXPIRY,
+        attempts: 0
     };
     
-    // Save user
-    users.push(newUser);
-    localStorage.setItem('flavorlyUsers', JSON.stringify(users));
+    sessionStorage.setItem('pendingVerification', JSON.stringify(verificationData));
     
-    // Auto login
-    currentUser = newUser;
-    localStorage.setItem('flavorlyUser', JSON.stringify(newUser));
+    // Send verification email
+    sendVerificationEmailAndShowModal(email, verificationCode, 'signup');
+}
+
+// Send verification email and show modal
+async function sendVerificationEmailAndShowModal(email, code, type) {
+    const result = await sendVerificationEmail(email, code, type);
     
-    showNotification(`Welcome to Flavorly, ${name}!`, 'success');
-    closeAuthModal();
-    updateUIForLoggedInUser();
-    
-    // Redirect to recipe generator
-    setTimeout(() => {
-        showRecipeGenerator();
-    }, 1000);
+    if (result.success) {
+        // Close signup modal and show verification modal
+        closeAuthModal();
+        showVerificationModal(email, type);
+        showNotification('Verification code sent to your email!', 'success');
+    } else {
+        // Fallback to demo mode if email service fails
+        console.log('Email service failed, using demo mode');
+        closeAuthModal();
+        showVerificationModal(email, type);
+        showNotification(`Demo mode: Your verification code is ${code}`, 'info');
+    }
 }
 
 // Update UI for logged in user
@@ -403,19 +408,343 @@ function updateUIForLoggedInUser() {
     }
 }
 
-// EmailJS Configuration - You need to set these up
-const EMAILJS_CONFIG = {
-    PUBLIC_KEY: '', // Add your EmailJS public key here
-    SERVICE_ID: '', // Add your EmailJS service ID here
-    TEMPLATE_ID: '' // Add your EmailJS template ID here
+// Modern Email Verification System - Like GitHub/Modern Websites
+const EMAIL_VERIFICATION = {
+    // Email service configuration (using Resend - modern email API)
+    API_KEY: '', // Will be injected from GitHub Secrets
+    FROM_EMAIL: 'noreply@flavorly.app',
+    BASE_URL: window.location.origin,
+    
+    // Verification settings
+    CODE_LENGTH: 6,
+    CODE_EXPIRY: 10 * 60 * 1000, // 10 minutes
+    MAX_ATTEMPTS: 3
 };
 
-// Initialize EmailJS
-(function() {
-    emailjs.init("YOUR_PUBLIC_KEY"); // Replace with your actual public key
-})();
+// Generate verification code
+function generateVerificationCode() {
+    return Math.floor(100000 + Math.random() * 900000).toString();
+}
 
-// Handle forgot password with real email
+// Send verification email using modern email API
+async function sendVerificationEmail(email, code, type = 'verification') {
+    try {
+        const subject = type === 'verification' 
+            ? 'Flavorly - Verify Your Email' 
+            : 'Flavorly - Password Reset Code';
+            
+        const htmlContent = type === 'verification'
+            ? generateVerificationEmailHTML(code)
+            : generatePasswordResetEmailHTML(code);
+
+        const response = await fetch('https://api.resend.com/emails', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${EMAIL_VERIFICATION.API_KEY}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                from: EMAIL_VERIFICATION.FROM_EMAIL,
+                to: [email],
+                subject: subject,
+                html: htmlContent
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`Email service error: ${response.status}`);
+        }
+
+        return { success: true };
+    } catch (error) {
+        console.error('Email sending failed:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+// Generate verification email HTML
+function generateVerificationEmailHTML(code) {
+    return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Verify Your Email - Flavorly</title>
+        <style>
+            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 20px; background-color: #f8f9fa; }
+            .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+            .header { background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%); padding: 40px 30px; text-align: center; color: white; }
+            .header h1 { margin: 0; font-size: 28px; font-weight: 600; }
+            .content { padding: 40px 30px; }
+            .code-box { background: #f8f9fa; border: 2px solid #e9ecef; border-radius: 8px; padding: 20px; text-align: center; margin: 20px 0; }
+            .code { font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #FF6B35; font-family: monospace; }
+            .footer { background: #f8f9fa; padding: 20px 30px; text-align: center; color: #6c757d; font-size: 14px; }
+            .button { display: inline-block; background: #FF6B35; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; margin: 20px 0; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>🍳 Verify Your Email</h1>
+                <p>Welcome to Flavorly!</p>
+            </div>
+            <div class="content">
+                <h2>Complete Your Registration</h2>
+                <p>Thanks for signing up for Flavorly! To complete your registration and start creating amazing recipes, please verify your email address.</p>
+                
+                <div class="code-box">
+                    <p>Your verification code is:</p>
+                    <div class="code">${code}</div>
+                    <p style="color: #6c757d; font-size: 14px; margin-top: 10px;">This code will expire in 10 minutes</p>
+                </div>
+                
+                <p><strong>Not expecting this email?</strong></p>
+                <p>If you didn't sign up for Flavorly, you can safely ignore this email.</p>
+                
+                <div style="text-align: center; margin: 30px 0;">
+                    <a href="${EMAIL_VERIFICATION.BASE_URL}" class="button">Go to Flavorly</a>
+                </div>
+            </div>
+            <div class="footer">
+                <p>© 2024 Flavorly - Made with ❤️ for food lovers</p>
+                <p>This is an automated message, please do not reply to this email.</p>
+            </div>
+        </div>
+    </body>
+    </html>
+    `;
+}
+
+// Generate password reset email HTML
+function generatePasswordResetEmailHTML(code) {
+    return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Password Reset - Flavorly</title>
+        <style>
+            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 20px; background-color: #f8f9fa; }
+            .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+            .header { background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%); padding: 40px 30px; text-align: center; color: white; }
+            .header h1 { margin: 0; font-size: 28px; font-weight: 600; }
+            .content { padding: 40px 30px; }
+            .code-box { background: #f8f9fa; border: 2px solid #e9ecef; border-radius: 8px; padding: 20px; text-align: center; margin: 20px 0; }
+            .code { font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #FF6B35; font-family: monospace; }
+            .footer { background: #f8f9fa; padding: 20px 30px; text-align: center; color: #6c757d; font-size: 14px; }
+            .warning { background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 6px; padding: 15px; margin: 20px 0; color: #856404; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>🔐 Password Reset</h1>
+                <p>Flavorly Security</p>
+            </div>
+            <div class="content">
+                <h2>Reset Your Password</h2>
+                <p>We received a request to reset your password for your Flavorly account. Use the code below to set a new password.</p>
+                
+                <div class="warning">
+                    <strong>Security Notice:</strong> This code will expire in 10 minutes. If you didn't request this password reset, please ignore this email.
+                </div>
+                
+                <div class="code-box">
+                    <p>Your password reset code is:</p>
+                    <div class="code">${code}</div>
+                    <p style="color: #6c757d; font-size: 14px; margin-top: 10px;">Enter this code in the app to reset your password</p>
+                </div>
+                
+                <p><strong>Need help?</strong></p>
+                <p>If you're having trouble resetting your password, contact our support team at support@flavorly.app</p>
+            </div>
+            <div class="footer">
+                <p>© 2024 Flavorly - Made with ❤️ for food lovers</p>
+                <p>This is an automated message, please do not reply to this email.</p>
+            </div>
+        </div>
+    </body>
+    </html>
+    `;
+}
+
+// Show verification modal
+function showVerificationModal(email, type = 'signup') {
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center';
+    modal.id = 'verification-modal';
+    modal.innerHTML = `
+        <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4 relative">
+            <button onclick="closeVerificationModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+            
+            <div class="text-center mb-8">
+                <div class="w-16 h-16 bg-gradient-to-r from-orange-500 to-orange-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-envelope text-white text-2xl"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">Check Your Email</h2>
+                <p class="text-gray-600">We sent a 6-digit code to ${email}</p>
+            </div>
+            
+            <form id="verificationForm" class="space-y-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Verification Code</label>
+                    <div class="flex justify-center gap-2">
+                        ${Array(6).fill(0).map((_, i) => `
+                            <input type="text" maxlength="1" class="w-12 h-12 text-center border-2 border-gray-300 rounded-lg text-xl font-bold focus:border-orange-500 focus:outline-none" 
+                                   id="code-${i}" onkeyup="handleCodeInput(event, ${i})" onpaste="handleCodePaste(event)">
+                        `).join('')}
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2 text-center">Enter the 6-digit code from your email</p>
+                </div>
+                
+                <button type="submit" class="w-full bg-orange-600 text-white py-3 rounded-lg font-semibold hover:bg-orange-700 transition-colors">
+                    Verify Email
+                </button>
+                
+                <div class="text-center">
+                    <p class="text-sm text-gray-600">
+                        Didn't receive the code? 
+                        <button type="button" onclick="resendVerificationCode()" class="text-orange-600 hover:text-orange-700 font-semibold">
+                            Resend
+                        </button>
+                    </p>
+                </div>
+            </form>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    document.getElementById('verificationForm').addEventListener('submit', handleVerificationSubmit);
+    
+    // Focus first input
+    setTimeout(() => document.getElementById('code-0').focus(), 100);
+}
+
+// Handle code input
+function handleCodeInput(event, index) {
+    const input = event.target;
+    const value = input.value;
+    
+    if (value.length === 1 && index < 5) {
+        document.getElementById(`code-${index + 1}`).focus();
+    } else if (event.key === 'Backspace' && value.length === 0 && index > 0) {
+        document.getElementById(`code-${index - 1}`).focus();
+    }
+}
+
+// Handle code paste
+function handleCodePaste(event) {
+    event.preventDefault();
+    const pastedData = event.clipboardData.getData('text').slice(0, 6);
+    const inputs = Array.from({length: 6}, (_, i) => document.getElementById(`code-${i}`));
+    
+    pastedData.split('').forEach((char, index) => {
+        if (inputs[index] && /\d/.test(char)) {
+            inputs[index].value = char;
+        }
+    });
+}
+
+// Handle verification submit
+function handleVerificationSubmit(e) {
+    e.preventDefault();
+    
+    const code = Array.from({length: 6}, (_, i) => 
+        document.getElementById(`code-${i}`).value
+    ).join('');
+    
+    if (code.length !== 6) {
+        showNotification('Please enter all 6 digits', 'error');
+        return;
+    }
+    
+    // Verify code
+    const verificationData = JSON.parse(sessionStorage.getItem('pendingVerification') || '{}');
+    
+    if (verificationData.code === code && Date.now() < verificationData.expiresAt) {
+        // Code is valid
+        completeRegistration(verificationData);
+    } else {
+        showNotification('Invalid or expired code', 'error');
+    }
+}
+
+// Resend verification code
+async function resendVerificationCode() {
+    const verificationData = JSON.parse(sessionStorage.getItem('pendingVerification') || '{}');
+    
+    if (!verificationData.email) {
+        showNotification('Verification session expired', 'error');
+        return;
+    }
+    
+    const newCode = generateVerificationCode();
+    verificationData.code = newCode;
+    verificationData.expiresAt = Date.now() + EMAIL_VERIFICATION.CODE_EXPIRY;
+    verificationData.attempts = 0;
+    
+    sessionStorage.setItem('pendingVerification', JSON.stringify(verificationData));
+    
+    const result = await sendVerificationEmail(verificationData.email, newCode, verificationData.type);
+    
+    if (result.success) {
+        showNotification('New code sent to your email', 'success');
+    } else {
+        showNotification('Failed to send code. Please try again.', 'error');
+    }
+}
+
+// Complete registration after verification
+function completeRegistration(verificationData) {
+    const users = JSON.parse(localStorage.getItem('flavorlyUsers') || '[]');
+    
+    const newUser = {
+        id: Date.now().toString(),
+        name: verificationData.name,
+        email: verificationData.email,
+        password: verificationData.password,
+        createdAt: new Date().toISOString(),
+        emailVerified: true,
+        preferences: {
+            dietary: '',
+            cuisine: '',
+            flavors: []
+        },
+        savedRecipes: []
+    };
+    
+    users.push(newUser);
+    localStorage.setItem('flavorlyUsers', JSON.stringify(users));
+    
+    // Auto login
+    currentUser = newUser;
+    localStorage.setItem('flavorlyUser', JSON.stringify(newUser));
+    
+    // Clear verification data
+    sessionStorage.removeItem('pendingVerification');
+    
+    showNotification(`Welcome to Flavorly, ${newUser.name}!`, 'success');
+    closeVerificationModal();
+    updateUIForLoggedInUser();
+    
+    setTimeout(() => {
+        showRecipeGenerator();
+    }, 1000);
+}
+
+// Close verification modal
+function closeVerificationModal() {
+    const modal = document.getElementById('verification-modal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+// Handle forgot password with modern verification
 function handleForgotPassword() {
     const email = document.getElementById('loginEmail').value;
     if (!email) {
@@ -423,28 +752,31 @@ function handleForgotPassword() {
         return;
     }
     
-    // Check if EmailJS is configured
-    if (!EMAILJS_CONFIG.PUBLIC_KEY || !EMAILJS_CONFIG.SERVICE_ID || !EMAILJS_CONFIG.TEMPLATE_ID) {
-        showNotification('EmailJS not configured. Please see setup instructions.', 'error');
-        showEmailSetupInstructions();
+    // Check if user exists
+    const users = JSON.parse(localStorage.getItem('flavorlyUsers') || '[]');
+    const user = users.find(u => u.email === email);
+    
+    if (!user) {
+        showNotification('No account found with this email address', 'error');
         return;
     }
     
-    // Generate reset token
-    const resetToken = generateResetToken();
-    const resetLink = `${window.location.origin}${window.location.pathname}?reset=${resetToken}&email=${encodeURIComponent(email)}`;
+    // Generate reset code
+    const resetCode = generateVerificationCode();
     
-    // Store reset token
-    const resetTokens = JSON.parse(localStorage.getItem('passwordResetTokens') || '{}');
-    resetTokens[resetToken] = {
+    // Store reset data
+    const resetData = {
         email: email,
-        createdAt: new Date().toISOString(),
-        expiresAt: new Date(Date.now() + 3600000).toISOString() // 1 hour expiry
+        code: resetCode,
+        type: 'password_reset',
+        expiresAt: Date.now() + EMAIL_VERIFICATION.CODE_EXPIRY,
+        attempts: 0
     };
-    localStorage.setItem('passwordResetTokens', JSON.stringify(resetTokens));
     
-    // Send real email using EmailJS
-    sendPasswordResetEmail(email, resetLink);
+    sessionStorage.setItem('pendingVerification', JSON.stringify(resetData));
+    
+    // Send reset email
+    sendVerificationEmailAndShowModal(email, resetCode, 'password_reset');
 }
 
 function sendPasswordResetEmail(email, resetLink) {
