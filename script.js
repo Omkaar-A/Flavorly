@@ -11,32 +11,369 @@ function initAuth() {
 }
 
 // Modal functions
+// Modern Authentication System
 function showLoginModal() {
-    document.getElementById('loginModal').classList.remove('hidden');
-    document.getElementById('signupModal').classList.add('hidden');
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center';
+    modal.id = 'auth-modal';
+    modal.innerHTML = `
+        <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4 relative">
+            <button onclick="closeAuthModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+            
+            <div class="text-center mb-8">
+                <div class="w-16 h-16 bg-gradient-to-r from-orange-500 to-orange-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-utensils text-white text-2xl"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">Welcome Back</h2>
+                <p class="text-gray-600">Sign in to your Flavorly account</p>
+            </div>
+            
+            <form id="loginForm" class="space-y-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+                    <div class="relative">
+                        <input type="email" id="loginEmail" required class="w-full px-4 py-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent" placeholder="you@example.com">
+                        <i class="fas fa-envelope absolute left-3 top-3.5 text-gray-400"></i>
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                    <div class="relative">
+                        <input type="password" id="loginPassword" required class="w-full px-4 py-3 pl-10 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent" placeholder="Enter your password">
+                        <i class="fas fa-lock absolute left-3 top-3.5 text-gray-400"></i>
+                        <button type="button" onclick="togglePassword('loginPassword')" class="absolute right-3 top-3.5 text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="flex items-center justify-between">
+                    <label class="flex items-center">
+                        <input type="checkbox" id="rememberMe" class="form-checkbox text-orange-600 mr-2">
+                        <span class="text-sm text-gray-600">Remember me</span>
+                    </label>
+                    <button type="button" onclick="showForgotPassword()" class="text-sm text-orange-600 hover:text-orange-700">
+                        Forgot password?
+                    </button>
+                </div>
+                
+                <button type="submit" class="w-full bg-orange-600 text-white py-3 rounded-lg font-semibold hover:bg-orange-700 transition-colors">
+                    Sign In
+                </button>
+                
+                <div class="relative">
+                    <div class="absolute inset-0 flex items-center">
+                        <div class="w-full border-t border-gray-300"></div>
+                    </div>
+                    <div class="relative flex justify-center text-sm">
+                        <span class="px-2 bg-white text-gray-500">Or continue with</span>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-3">
+                    <button type="button" onclick="socialLogin('google')" class="flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                        <i class="fab fa-google text-red-500 mr-2"></i>
+                        Google
+                    </button>
+                    <button type="button" onclick="socialLogin('facebook')" class="flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                        <i class="fab fa-facebook text-blue-600 mr-2"></i>
+                        Facebook
+                    </button>
+                </div>
+                
+                <div class="text-center">
+                    <p class="text-sm text-gray-600">
+                        Don't have an account? 
+                        <button type="button" onclick="switchToSignup()" class="text-orange-600 hover:text-orange-700 font-semibold">
+                            Sign up
+                        </button>
+                    </p>
+                </div>
+            </form>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    document.getElementById('loginForm').addEventListener('submit', handleLogin);
 }
 
 function showSignupModal() {
-    document.getElementById('signupModal').classList.remove('hidden');
-    document.getElementById('loginModal').classList.add('hidden');
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center';
+    modal.id = 'auth-modal';
+    modal.innerHTML = `
+        <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4 relative">
+            <button onclick="closeAuthModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+            
+            <div class="text-center mb-8">
+                <div class="w-16 h-16 bg-gradient-to-r from-orange-500 to-orange-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-user-plus text-white text-2xl"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">Create Account</h2>
+                <p class="text-gray-600">Join Flavorly and start creating amazing recipes</p>
+            </div>
+            
+            <form id="signupForm" class="space-y-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+                    <div class="relative">
+                        <input type="text" id="signupName" required class="w-full px-4 py-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent" placeholder="John Doe">
+                        <i class="fas fa-user absolute left-3 top-3.5 text-gray-400"></i>
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+                    <div class="relative">
+                        <input type="email" id="signupEmail" required class="w-full px-4 py-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent" placeholder="you@example.com">
+                        <i class="fas fa-envelope absolute left-3 top-3.5 text-gray-400"></i>
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                    <div class="relative">
+                        <input type="password" id="signupPassword" required minlength="6" class="w-full px-4 py-3 pl-10 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent" placeholder="Create a strong password">
+                        <i class="fas fa-lock absolute left-3 top-3.5 text-gray-400"></i>
+                        <button type="button" onclick="togglePassword('signupPassword')" class="absolute right-3 top-3.5 text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                    <div class="mt-2">
+                        <div class="flex items-center text-xs text-gray-500">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            Password must be at least 6 characters
+                        </div>
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Confirm Password</label>
+                    <div class="relative">
+                        <input type="password" id="confirmPassword" required minlength="6" class="w-full px-4 py-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent" placeholder="Confirm your password">
+                        <i class="fas fa-lock absolute left-3 top-3.5 text-gray-400"></i>
+                    </div>
+                </div>
+                
+                <div class="flex items-center">
+                    <input type="checkbox" id="agreeTerms" required class="form-checkbox text-orange-600 mr-2">
+                    <label for="agreeTerms" class="text-sm text-gray-600">
+                        I agree to the <a href="terms.html" target="_blank" class="text-orange-600 hover:text-orange-700">Terms of Service</a> and <a href="privacy.html" target="_blank" class="text-orange-600 hover:text-orange-700">Privacy Policy</a>
+                    </label>
+                </div>
+                
+                <button type="submit" class="w-full bg-orange-600 text-white py-3 rounded-lg font-semibold hover:bg-orange-700 transition-colors">
+                    Create Account
+                </button>
+                
+                <div class="relative">
+                    <div class="absolute inset-0 flex items-center">
+                        <div class="w-full border-t border-gray-300"></div>
+                    </div>
+                    <div class="relative flex justify-center text-sm">
+                        <span class="px-2 bg-white text-gray-500">Or sign up with</span>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-3">
+                    <button type="button" onclick="socialSignup('google')" class="flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                        <i class="fab fa-google text-red-500 mr-2"></i>
+                        Google
+                    </button>
+                    <button type="button" onclick="socialSignup('facebook')" class="flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                        <i class="fab fa-facebook text-blue-600 mr-2"></i>
+                        Facebook
+                    </button>
+                </div>
+                
+                <div class="text-center">
+                    <p class="text-sm text-gray-600">
+                        Already have an account? 
+                        <button type="button" onclick="switchToLogin()" class="text-orange-600 hover:text-orange-700 font-semibold">
+                            Sign in
+                        </button>
+                    </p>
+                </div>
+            </form>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    document.getElementById('signupForm').addEventListener('submit', handleSignup);
 }
 
-function closeLoginModal() {
-    document.getElementById('loginModal').classList.add('hidden');
-}
-
-function closeSignupModal() {
-    document.getElementById('signupModal').classList.add('hidden');
+function closeAuthModal() {
+    const modal = document.getElementById('auth-modal');
+    if (modal) {
+        modal.remove();
+    }
 }
 
 function switchToSignup() {
-    closeLoginModal();
+    closeAuthModal();
     showSignupModal();
 }
 
 function switchToLogin() {
-    closeSignupModal();
+    closeAuthModal();
     showLoginModal();
+}
+
+function togglePassword(inputId) {
+    const input = document.getElementById(inputId);
+    const icon = event.target;
+    
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+    } else {
+        input.type = 'password';
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+    }
+}
+
+function socialLogin(provider) {
+    showNotification(`${provider} login coming soon!`, 'info');
+}
+
+function socialSignup(provider) {
+    showNotification(`${provider} signup coming soon!`, 'info');
+}
+
+function showForgotPassword() {
+    const email = document.getElementById('loginEmail').value;
+    if (!email) {
+        showNotification('Please enter your email address first', 'error');
+        return;
+    }
+    
+    // Generate reset token
+    const resetToken = generateResetToken();
+    const resetLink = `${window.location.origin}${window.location.pathname}?reset=${resetToken}&email=${encodeURIComponent(email)}`;
+    
+    // Store reset token
+    const resetTokens = JSON.parse(localStorage.getItem('passwordResetTokens') || '{}');
+    resetTokens[resetToken] = {
+        email: email,
+        createdAt: new Date().toISOString(),
+        expiresAt: new Date(Date.now() + 3600000).toISOString() // 1 hour expiry
+    };
+    localStorage.setItem('passwordResetTokens', JSON.stringify(resetTokens));
+    
+    showNotification(`Password reset link sent to ${email}! (Demo mode)`, 'success');
+    closeAuthModal();
+}
+
+// Authentication Handlers
+function handleLogin(e) {
+    e.preventDefault();
+    
+    const email = document.getElementById('loginEmail').value;
+    const password = document.getElementById('loginPassword').value;
+    const rememberMe = document.getElementById('rememberMe').checked;
+    
+    // Get users from localStorage
+    const users = JSON.parse(localStorage.getItem('flavorlyUsers') || '[]');
+    
+    // Find user
+    const user = users.find(u => u.email === email && u.password === password);
+    
+    if (user) {
+        // Login successful
+        currentUser = user;
+        
+        // Save to localStorage if remember me is checked
+        if (rememberMe) {
+            localStorage.setItem('flavorlyUser', JSON.stringify(user));
+        } else {
+            sessionStorage.setItem('flavorlyUser', JSON.stringify(user));
+        }
+        
+        showNotification(`Welcome back, ${user.name}!`, 'success');
+        closeAuthModal();
+        updateUIForLoggedInUser();
+        
+        // Redirect to recipe generator or dashboard
+        setTimeout(() => {
+            showRecipeGenerator();
+        }, 1000);
+    } else {
+        showNotification('Invalid email or password', 'error');
+    }
+}
+
+function handleSignup(e) {
+    e.preventDefault();
+    
+    const name = document.getElementById('signupName').value;
+    const email = document.getElementById('signupEmail').value;
+    const password = document.getElementById('signupPassword').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
+    const agreeTerms = document.getElementById('agreeTerms').checked;
+    
+    // Validation
+    if (password !== confirmPassword) {
+        showNotification('Passwords do not match', 'error');
+        return;
+    }
+    
+    if (password.length < 6) {
+        showNotification('Password must be at least 6 characters', 'error');
+        return;
+    }
+    
+    if (!agreeTerms) {
+        showNotification('Please agree to the Terms of Service and Privacy Policy', 'error');
+        return;
+    }
+    
+    // Get existing users
+    const users = JSON.parse(localStorage.getItem('flavorlyUsers') || '[]');
+    
+    // Check if user already exists
+    if (users.find(u => u.email === email)) {
+        showNotification('An account with this email already exists', 'error');
+        return;
+    }
+    
+    // Create new user
+    const newUser = {
+        id: Date.now().toString(),
+        name: name,
+        email: email,
+        password: password, // In production, this should be hashed
+        createdAt: new Date().toISOString(),
+        preferences: {
+            dietary: '',
+            cuisine: '',
+            flavors: []
+        },
+        savedRecipes: []
+    };
+    
+    // Save user
+    users.push(newUser);
+    localStorage.setItem('flavorlyUsers', JSON.stringify(users));
+    
+    // Auto login
+    currentUser = newUser;
+    localStorage.setItem('flavorlyUser', JSON.stringify(newUser));
+    
+    showNotification(`Welcome to Flavorly, ${name}!`, 'success');
+    closeAuthModal();
+    updateUIForLoggedInUser();
+    
+    // Redirect to recipe generator
+    setTimeout(() => {
+        showRecipeGenerator();
+    }, 1000);
 }
 
 // Update UI for logged in user
