@@ -598,10 +598,10 @@ function closeSudoModal() {
     }
 }
 
-// GitHub-Style Email Verification System (using Twilio SendGrid - Twilio's platform)
+// GitHub-Style Email Verification System (using Brevo - Most Secure & Reliable)
 const EMAIL_VERIFICATION = {
-    // Email service configuration (Twilio SendGrid - GitHub's choice, now on Twilio platform)
-    API_KEY: '', // Will be injected from GitHub Secrets (TWILIO_SENDGRID_API_KEY)
+    // Email service configuration (Brevo Sendinblue - Most secure option)
+    API_KEY: '', // Will be injected from GitHub Secrets (BREVO_API_KEY)
     FROM_EMAIL: 'noreply@flavorly.app',
     FROM_NAME: 'Flavorly',
     BASE_URL: window.location.origin,
@@ -618,7 +618,7 @@ function generateVerificationCode() {
     return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
-// Send verification email using SendGrid API (industry standard)
+// Send verification email using Brevo API (most secure option)
 async function sendVerificationEmail(email, code, type = 'verification') {
     try {
         const subject = type === 'verification' 
@@ -629,32 +629,34 @@ async function sendVerificationEmail(email, code, type = 'verification') {
             ? generateVerificationEmailHTML(code)
             : generatePasswordResetEmailHTML(code);
 
-        const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
+        const response = await fetch('https://api.brevo.com/v3/smtp/email', {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${EMAIL_VERIFICATION.API_KEY}`,
-                'Content-Type': 'application/json'
+                'api-key': EMAIL_VERIFICATION.API_KEY,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
             },
             body: JSON.stringify({
-                personalizations: [{
-                    to: [{ email: email }],
-                    subject: subject
+                sender: {
+                    name: EMAIL_VERIFICATION.FROM_NAME,
+                    email: EMAIL_VERIFICATION.FROM_EMAIL
+                },
+                to: [{
+                    email: email,
+                    name: email.split('@')[0]
                 }],
-                from: { email: EMAIL_VERIFICATION.FROM_EMAIL, name: 'Flavorly' },
-                content: [{
-                    type: 'text/html',
-                    value: htmlContent
-                }]
+                subject: subject,
+                htmlContent: htmlContent
             })
         });
 
         if (!response.ok) {
-            throw new Error(`SendGrid API error: ${response.status}`);
+            throw new Error(`Brevo API error: ${response.status}`);
         }
 
         return { success: true };
     } catch (error) {
-        console.error('SendGrid email sending failed:', error);
+        console.error('Brevo email sending failed:', error);
         return { success: false, error: error.message };
     }
 }
