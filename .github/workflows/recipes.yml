@@ -29,9 +29,10 @@ jobs:
         GEMMA_API_KEY: ${{ secrets.GEMMA_API_KEY }}
       run: |
         # Replace environment variable with actual secret value
-        sed -i "s/gemma-2-2b-it/gemma/g" script.js
+        sed -i "s/gemma/gemma-1.1-7b-it/g" script.js
+        sed -i "s/v1beta/v1/g" script.js
         sed -i "s/process.env.GEMMA_API_KEY || ''/\'$GEMMA_API_KEY\'/" script.js
-        echo "✅ API key added and model updated to basic gemma!"
+        echo "✅ API key added and model updated to gemma-1.1-7b-it!"
         
     - name: Upload artifact
       uses: actions/upload-pages-artifact@v3
