@@ -598,17 +598,19 @@ function closeSudoModal() {
     }
 }
 
-// Modern Email Verification System - Using SendGrid (Industry Standard)
+// GitHub-Style Email Verification System (using SendGrid - GitHub's choice)
 const EMAIL_VERIFICATION = {
-    // Email service configuration (using SendGrid - trusted by GitHub, Uber, Airbnb)
+    // Email service configuration (SendGrid - GitHub's email provider)
     API_KEY: '', // Will be injected from GitHub Secrets (SENDGRID_API_KEY)
     FROM_EMAIL: 'noreply@flavorly.app',
+    FROM_NAME: 'Flavorly',
     BASE_URL: window.location.origin,
     
-    // Verification settings
+    // GitHub-style verification settings
     CODE_LENGTH: 6,
-    CODE_EXPIRY: 10 * 60 * 1000, // 10 minutes
-    MAX_ATTEMPTS: 3
+    CODE_EXPIRY: 10 * 60 * 1000, // 10 minutes (same as GitHub)
+    MAX_ATTEMPTS: 3,
+    RESEND_COOLDOWN: 60 * 1000 // 1 minute between resends
 };
 
 // Generate verification code
@@ -657,7 +659,7 @@ async function sendVerificationEmail(email, code, type = 'verification') {
     }
 }
 
-// Generate verification email HTML
+// Generate GitHub-style verification email HTML
 function generateVerificationEmailHTML(code) {
     return `
     <!DOCTYPE html>
@@ -665,45 +667,116 @@ function generateVerificationEmailHTML(code) {
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Verify Your Email - Flavorly</title>
+        <title>Verify your email address - Flavorly</title>
         <style>
-            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 20px; background-color: #f8f9fa; }
-            .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-            .header { background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%); padding: 40px 30px; text-align: center; color: white; }
-            .header h1 { margin: 0; font-size: 28px; font-weight: 600; }
-            .content { padding: 40px 30px; }
-            .code-box { background: #f8f9fa; border: 2px solid #e9ecef; border-radius: 8px; padding: 20px; text-align: center; margin: 20px 0; }
-            .code { font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #FF6B35; font-family: monospace; }
-            .footer { background: #f8f9fa; padding: 20px 30px; text-align: center; color: #6c757d; font-size: 14px; }
-            .button { display: inline-block; background: #FF6B35; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; margin: 20px 0; }
+            body { 
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; 
+                margin: 0; 
+                padding: 20px; 
+                background-color: #f6f8fa; 
+                color: #24292f;
+            }
+            .container { 
+                max-width: 600px; 
+                margin: 0 auto; 
+                background: white; 
+                border-radius: 6px; 
+                overflow: hidden; 
+                box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+            }
+            .header { 
+                background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%); 
+                padding: 32px 24px; 
+                text-align: center; 
+                color: white; 
+            }
+            .header h1 { 
+                margin: 0; 
+                font-size: 24px; 
+                font-weight: 600; 
+                line-height: 1.25;
+            }
+            .content { 
+                padding: 32px 24px; 
+                text-align: center;
+            }
+            .code-box { 
+                background: #f6f8fa; 
+                border: 1px solid #d0d7de; 
+                border-radius: 6px; 
+                padding: 24px; 
+                text-align: center; 
+                margin: 24px 0; 
+            }
+            .code { 
+                font-size: 32px; 
+                font-weight: 600; 
+                letter-spacing: 8px; 
+                color: #FF6B35; 
+                font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+                line-height: 1;
+            }
+            .footer { 
+                background: #f6f8fa; 
+                padding: 24px; 
+                text-align: center; 
+                color: #656d76; 
+                font-size: 12px; 
+                border-top: 1px solid #d0d7de;
+            }
+            .button { 
+                display: inline-block; 
+                background: #FF6B35; 
+                color: white; 
+                padding: 12px 24px; 
+                text-decoration: none; 
+                border-radius: 6px; 
+                font-weight: 600; 
+                margin: 16px 0;
+                transition: background-color 0.2s;
+            }
+            .button:hover { background: #e55a2b; }
+            .warning-text {
+                color: #656d76;
+                font-size: 14px;
+                margin: 16px 0;
+            }
         </style>
     </head>
     <body>
         <div class="container">
             <div class="header">
-                <h1>🍳 Verify Your Email</h1>
-                <p>Welcome to Flavorly!</p>
+                <h1>🍳 Verify your email address</h1>
             </div>
             <div class="content">
-                <h2>Complete Your Registration</h2>
-                <p>Thanks for signing up for Flavorly! To complete your registration and start creating amazing recipes, please verify your email address.</p>
+                <h2 style="font-size: 20px; margin-bottom: 16px;">Complete your registration</h2>
+                <p style="color: #656d76; line-height: 1.5;">
+                    Thanks for signing up for Flavorly! To complete your registration and start creating amazing recipes, please verify your email address.
+                </p>
                 
                 <div class="code-box">
-                    <p>Your verification code is:</p>
+                    <p style="margin: 0 0 16px 0; font-weight: 600;">Your verification code is:</p>
                     <div class="code">${code}</div>
-                    <p style="color: #6c757d; font-size: 14px; margin-top: 10px;">This code will expire in 10 minutes</p>
+                    <p class="warning-text">This code will expire in 10 minutes</p>
                 </div>
                 
-                <p><strong>Not expecting this email?</strong></p>
-                <p>If you didn't sign up for Flavorly, you can safely ignore this email.</p>
+                <div style="background: #fff8c5; border: 1px solid #d4a017; border-radius: 6px; padding: 16px; margin: 24px 0;">
+                    <p style="margin: 0; color: #6f4c00; font-size: 14px;">
+                        <strong>Security notice:</strong> If you didn't sign up for Flavorly, you can safely ignore this email.
+                    </p>
+                </div>
                 
-                <div style="text-align: center; margin: 30px 0;">
+                <div style="text-align: center; margin: 32px 0;">
                     <a href="${EMAIL_VERIFICATION.BASE_URL}" class="button">Go to Flavorly</a>
                 </div>
+                
+                <p style="color: #656d76; font-size: 14px; margin: 24px 0 0 0;">
+                    Having trouble? <a href="${EMAIL_VERIFICATION.BASE_URL}/support" style="color: #0969da;">Contact support</a>
+                </p>
             </div>
             <div class="footer">
-                <p>© 2024 Flavorly - Made with ❤️ for food lovers</p>
-                <p>This is an automated message, please do not reply to this email.</p>
+                <p style="margin: 0 0 8px 0;">© 2024 Flavorly - Made with ❤️ for food lovers</p>
+                <p style="margin: 0;">This is an automated message. Please do not reply to this email.</p>
             </div>
         </div>
     </body>
@@ -711,7 +784,7 @@ function generateVerificationEmailHTML(code) {
     `;
 }
 
-// Generate password reset email HTML
+// Generate GitHub-style password reset email HTML
 function generatePasswordResetEmailHTML(code) {
     return `
     <!DOCTYPE html>
@@ -719,45 +792,107 @@ function generatePasswordResetEmailHTML(code) {
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Password Reset - Flavorly</title>
+        <title>Reset your password - Flavorly</title>
         <style>
-            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 20px; background-color: #f8f9fa; }
-            .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-            .header { background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%); padding: 40px 30px; text-align: center; color: white; }
-            .header h1 { margin: 0; font-size: 28px; font-weight: 600; }
-            .content { padding: 40px 30px; }
-            .code-box { background: #f8f9fa; border: 2px solid #e9ecef; border-radius: 8px; padding: 20px; text-align: center; margin: 20px 0; }
-            .code { font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #FF6B35; font-family: monospace; }
-            .footer { background: #f8f9fa; padding: 20px 30px; text-align: center; color: #6c757d; font-size: 14px; }
-            .warning { background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 6px; padding: 15px; margin: 20px 0; color: #856404; }
+            body { 
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; 
+                margin: 0; 
+                padding: 20px; 
+                background-color: #f6f8fa; 
+                color: #24292f;
+            }
+            .container { 
+                max-width: 600px; 
+                margin: 0 auto; 
+                background: white; 
+                border-radius: 6px; 
+                overflow: hidden; 
+                box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+            }
+            .header { 
+                background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%); 
+                padding: 32px 24px; 
+                text-align: center; 
+                color: white; 
+            }
+            .header h1 { 
+                margin: 0; 
+                font-size: 24px; 
+                font-weight: 600; 
+                line-height: 1.25;
+            }
+            .content { 
+                padding: 32px 24px; 
+                text-align: center;
+            }
+            .code-box { 
+                background: #f6f8fa; 
+                border: 1px solid #d0d7de; 
+                border-radius: 6px; 
+                padding: 24px; 
+                text-align: center; 
+                margin: 24px 0; 
+            }
+            .code { 
+                font-size: 32px; 
+                font-weight: 600; 
+                letter-spacing: 8px; 
+                color: #FF6B35; 
+                font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+                line-height: 1;
+            }
+            .footer { 
+                background: #f6f8fa; 
+                padding: 24px; 
+                text-align: center; 
+                color: #656d76; 
+                font-size: 12px; 
+                border-top: 1px solid #d0d7de;
+            }
+            .warning { 
+                background: #fff8c5; 
+                border: 1px solid #d4a017; 
+                border-radius: 6px; 
+                padding: 16px; 
+                margin: 24px 0; 
+                color: #6f4c00; 
+                font-size: 14px;
+            }
+            .help-text {
+                color: #656d76;
+                font-size: 14px;
+                margin: 16px 0;
+            }
         </style>
     </head>
     <body>
         <div class="container">
             <div class="header">
-                <h1>🔐 Password Reset</h1>
-                <p>Flavorly Security</p>
+                <h1>🔐 Reset your password</h1>
             </div>
             <div class="content">
-                <h2>Reset Your Password</h2>
-                <p>We received a request to reset your password for your Flavorly account. Use the code below to set a new password.</p>
+                <h2 style="font-size: 20px; margin-bottom: 16px;">Password reset requested</h2>
+                <p style="color: #656d76; line-height: 1.5;">
+                    We received a request to reset your password for your Flavorly account. Use the code below to set a new password.
+                </p>
                 
                 <div class="warning">
-                    <strong>Security Notice:</strong> This code will expire in 10 minutes. If you didn't request this password reset, please ignore this email.
+                    <strong>Security notice:</strong> This code will expire in 10 minutes. If you didn't request this password reset, please ignore this email.
                 </div>
                 
                 <div class="code-box">
-                    <p>Your password reset code is:</p>
+                    <p style="margin: 0 0 16px 0; font-weight: 600;">Your password reset code is:</p>
                     <div class="code">${code}</div>
-                    <p style="color: #6c757d; font-size: 14px; margin-top: 10px;">Enter this code in the app to reset your password</p>
+                    <p class="help-text">Enter this code in the app to reset your password</p>
                 </div>
                 
-                <p><strong>Need help?</strong></p>
-                <p>If you're having trouble resetting your password, contact our support team at support@flavorly.app</p>
+                <p style="color: #656d76; font-size: 14px; margin: 24px 0 0 0;">
+                    Having trouble? <a href="${EMAIL_VERIFICATION.BASE_URL}/support" style="color: #0969da;">Contact support</a>
+                </p>
             </div>
             <div class="footer">
-                <p>© 2024 Flavorly - Made with ❤️ for food lovers</p>
-                <p>This is an automated message, please do not reply to this email.</p>
+                <p style="margin: 0 0 8px 0;">© 2024 Flavorly - Made with ❤️ for food lovers</p>
+                <p style="margin: 0;">This is an automated message. Please do not reply to this email.</p>
             </div>
         </div>
     </body>
