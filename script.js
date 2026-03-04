@@ -16,10 +16,12 @@ function initAuth() {
 // Modal functions
 // Modern Authentication System
 function showLoginModal() {
-    const modal = document.createElement('div');
-    modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center';
-    modal.id = 'auth-modal';
-    modal.innerHTML = `
+    console.log('🔐 showLoginModal called');
+    try {
+        const modal = document.createElement('div');
+        modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center';
+        modal.id = 'auth-modal';
+        modal.innerHTML = `
         <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4 relative">
             <button onclick="closeAuthModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
                 <i class="fas fa-times text-xl"></i>
@@ -101,13 +103,20 @@ function showLoginModal() {
     
     document.body.appendChild(modal);
     document.getElementById('loginForm').addEventListener('submit', handleLogin);
+    console.log('✅ Login modal created successfully');
+    } catch (error) {
+        console.error('❌ Error in showLoginModal:', error);
+        showNotification('Failed to open login modal', 'error');
+    }
 }
 
 function showSignupModal() {
-    const modal = document.createElement('div');
-    modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center';
-    modal.id = 'auth-modal';
-    modal.innerHTML = `
+    console.log('🔐 showSignupModal called');
+    try {
+        const modal = document.createElement('div');
+        modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center';
+        modal.id = 'auth-modal';
+        modal.innerHTML = `
         <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4 relative">
             <button onclick="closeAuthModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
                 <i class="fas fa-times text-xl"></i>
@@ -208,6 +217,11 @@ function showSignupModal() {
     
     document.body.appendChild(modal);
     document.getElementById('signupForm').addEventListener('submit', handleSignup);
+    console.log('✅ Signup modal created successfully');
+    } catch (error) {
+        console.error('❌ Error in showSignupModal:', error);
+        showNotification('Failed to open signup modal', 'error');
+    }
 }
 
 function closeAuthModal() {
@@ -1859,9 +1873,22 @@ function logout() {
 
 // Show recipe generator section
 function showRecipeGenerator() {
-    const generator = document.getElementById('recipe-generator');
-    generator.classList.remove('hidden');
-    generator.scrollIntoView({ behavior: 'smooth' });
+    console.log('🎯 showRecipeGenerator called');
+    try {
+        const generator = document.getElementById('recipe-generator');
+        if (!generator) {
+            console.error('❌ recipe-generator element not found');
+            showNotification('Recipe generator section not found', 'error');
+            return;
+        }
+        console.log('✅ recipe-generator element found, removing hidden class');
+        generator.classList.remove('hidden');
+        generator.scrollIntoView({ behavior: 'smooth' });
+        console.log('✅ Recipe generator shown successfully');
+    } catch (error) {
+        console.error('❌ Error in showRecipeGenerator:', error);
+        showNotification('Failed to open recipe generator', 'error');
+    }
 }
 
 // AI Configuration - Admin keys (only you need to set these)
