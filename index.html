@@ -4,8 +4,28 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Flavorly - AI-Powered Recipe Platform</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="description" content="AI-powered recipe generator that creates personalized recipes based on your preferences">
+    <meta name="theme-color" content="#FF6B35">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Flavorly">
+    <meta name="application-name" content="Flavorly">
+    <meta name="msapplication-TileColor" content="#FF6B35">
+    <meta name="msapplication-config" content="/browserconfig.xml">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- Icons -->
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="alternate icon" href="favicon.ico" type="image/x-icon">
+    <link rel="apple-touch-icon" href="icon-192x192.png">
+    <link rel="icon" sizes="192x192" href="icon-192x192.png">
+    <link rel="icon" sizes="512x512" href="icon-512x512.png">
+    
+    <!-- Scripts and Styles -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous">
     <link rel="stylesheet" href="styles.css">
@@ -108,6 +128,10 @@
                 <div class="flex items-center space-x-4">
                     <button class="text-gray-600 hover:text-orange-600 transition-colors">Features</button>
                     <button class="text-gray-600 hover:text-orange-600 transition-colors">How it Works</button>
+                    <button id="install-btn" class="hidden bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center">
+                        <i class="fas fa-download mr-2"></i>
+                        Install App
+                    </button>
                     <button onclick="showSettingsModal()" class="text-gray-600 hover:text-orange-600 transition-colors">
                         <i class="fas fa-cog"></i>
                     </button>

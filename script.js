@@ -2951,6 +2951,181 @@ function showNotification(message, type) {
     }, 3000);
 }
 
+// PWA Installation Logic
+let deferredPrompt;
+let installButton;
+
+// Register Service Worker
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+            .then(registration => {
+                console.log('✅ Service Worker registered with scope:', registration.scope);
+            })
+            .catch(error => {
+                console.log('❌ Service Worker registration failed:', error);
+            });
+    });
+}
+
+// Listen for install prompt
+window.addEventListener('beforeinstallprompt', (e) => {
+    console.log('📱 Install prompt detected');
+    e.preventDefault();
+    deferredPrompt = e;
+    
+    // Show install button
+    installButton = document.getElementById('install-btn');
+    if (installButton) {
+        installButton.classList.remove('hidden');
+        installButton.addEventListener('click', () => {
+            installApp();
+        });
+    }
+});
+
+// Install the PWA
+function installApp() {
+    if (!deferredPrompt) {
+        console.log('❌ No install prompt available');
+        return;
+    }
+    
+    console.log('🚀 Installing Flavorly app...');
+    deferredPrompt.prompt();
+    
+    deferredPrompt.userChoice.then((choiceResult) => {
+        if (choiceResult.outcome === 'accepted') {
+            console.log('✅ User accepted the install prompt');
+            showNotification('Flavorly installed successfully! 🎉', 'success');
+            
+            // Hide install button
+            if (installButton) {
+                installButton.classList.add('hidden');
+            }
+            
+            // Track installation
+            trackAppInstallation();
+        } else {
+            console.log('❌ User dismissed the install prompt');
+        }
+        deferredPrompt = null;
+    });
+}
+
+// Track app installation
+function trackAppInstallation() {
+    // Save installation info
+    const installInfo = {
+        installed: true,
+        installDate: new Date().toISOString(),
+        platform: navigator.platform,
+        userAgent: navigator.userAgent
+    };
+    
+    localStorage.setItem('flavorly-install-info', JSON.stringify(installInfo));
+    
+    // Send analytics if available
+    if (typeof gtag !== 'undefined') {
+        gtag('event', 'app_install', {
+            'event_category': 'engagement',
+            'event_label': 'pwa_install'
+        });
+    }
+}
+
+// Check if app is installed
+function isAppInstalled() {
+    return window.matchMedia('(display-mode: standalone)').matches || 
+           window.navigator.standalone === true ||
+           document.referrer.includes('android-app://');
+}
+
+// Handle app shortcuts
+if ('shortcuts' in navigator) {
+    navigator.shortcuts.addEventListener('shortcut', (event) => {
+        console.log('🔗 App shortcut activated:', event.shortcut);
+        
+        switch(event.shortcut.name) {
+            case 'Generate Recipe':
+                showRecipeGenerator();
+                break;
+            case 'My Recipes':
+                showNotification('My Recipes feature coming soon!', 'info');
+                break;
+        }
+    });
+}
+
+// Handle URL actions for shortcuts
+function handleURLActions() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const action = urlParams.get('action');
+    
+    switch(action) {
+        case 'generate':
+            setTimeout(() => showRecipeGenerator(), 1000);
+            break;
+        case 'recipes':
+            showNotification('My Recipes feature coming soon!', 'info');
+            break;
+    }
+}
+
+// Auto-launch features for installed app
+if (isAppInstalled()) {
+    console.log('🎯 Running in installed app mode');
+    
+    // Hide install button if already installed
+    const installBtn = document.getElementById('install-btn');
+    if (installBtn) {
+        installBtn.classList.add('hidden');
+    }
+    
+    // Add app-specific features
+    document.body.classList.add('pwa-installed');
+    
+    // Enable offline indicators
+    setupOfflineIndicator();
+}
+
+// Setup offline indicator
+function setupOfflineIndicator() {
+    const indicator = document.createElement('div');
+    indicator.id = 'offline-indicator';
+    indicator.className = 'fixed top-20 right-4 bg-yellow-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 hidden';
+    indicator.innerHTML = '<i class="fas fa-wifi mr-2"></i>Offline Mode';
+    document.body.appendChild(indicator);
+    
+    // Monitor online/offline status
+    window.addEventListener('online', () => {
+        console.log('🌐 Back online');
+        indicator.classList.add('hidden');
+        showNotification('Connection restored!', 'success');
+    });
+    
+    window.addEventListener('offline', () => {
+        console.log('📱 Gone offline');
+        indicator.classList.remove('hidden');
+        showNotification('Working offline - some features may be limited', 'info');
+    });
+}
+
+// Quick launch keyboard shortcuts
+document.addEventListener('keydown', (e) => {
+    // Ctrl/Cmd + Shift + F for quick recipe generation
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'F') {
+        e.preventDefault();
+        showRecipeGenerator();
+    }
+    
+    // Ctrl/Cmd + Shift + S for settings
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'S') {
+        e.preventDefault();
+        showSettingsModal();
+    }
+});
+
 // Smooth scroll for navigation links
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     anchor.addEventListener('click', function (e) {
@@ -3011,6 +3186,7 @@ function checkPasswordReset() {
 document.addEventListener('DOMContentLoaded', function() {
     initAuth(); // Initialize authentication system
     checkPasswordReset(); // Check for password reset requests
+    handleURLActions(); // Handle URL actions for shortcuts
     
     // Add specific event listeners for navigation buttons without onclick
     document.querySelectorAll('button').forEach(button => {

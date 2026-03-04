@@ -81,9 +81,8 @@ To remove Flavorly:
 ## 📧 Support
 
 Need help? Contact us at:
-- 📧 Email: support@flavorly.app
-- 🌐 Web: https://flavorly.app
+- 🌐 Web: https://github.com/Omkaar-A/Flavorly/issues
 
 ---
 
-© 2024 Flavorly - Made with ❤️ for food lovers everywhere
+© 2026 Flavorly - Made with ❤️ for food lovers everywhere
