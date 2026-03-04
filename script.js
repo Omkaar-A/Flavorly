@@ -8,6 +8,9 @@ function initAuth() {
         currentUser = JSON.parse(savedUser);
         updateUIForLoggedInUser();
     }
+    
+    // Initialize sudo mode
+    initSudoMode();
 }
 
 // Modal functions
@@ -408,6 +411,193 @@ function updateUIForLoggedInUser() {
     }
 }
 
+// GitHub-Style Sudo Mode System
+const SUDO_MODE = {
+    // Sudo session settings
+    DURATION: 10 * 60 * 1000, // 10 minutes like GitHub
+    REQUIRED_ACTIONS: [
+        'delete_account',
+        'change_password', 
+        'delete_recipes',
+        'export_data',
+        'change_email'
+    ]
+};
+
+// Current sudo session
+let sudoSession = null;
+
+// Check if sudo mode is active
+function isSudoModeActive() {
+    return sudoSession && Date.now() < sudoSession.expiresAt;
+}
+
+// Request sudo mode for sensitive operations
+function requestSudoMode(action, callback) {
+    if (isSudoModeActive()) {
+        // Sudo mode already active, proceed
+        callback();
+        return;
+    }
+    
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center';
+    modal.id = 'sudo-modal';
+    modal.innerHTML = `
+        <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4 relative">
+            <button onclick="closeSudoModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+            
+            <div class="text-center mb-8">
+                <div class="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-shield-alt text-yellow-600 text-2xl"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">Sudo Mode Required</h2>
+                <p class="text-gray-600">This is a sensitive operation. Please confirm your password to continue.</p>
+            </div>
+            
+            <form id="sudoForm" class="space-y-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Confirm Password</label>
+                    <div class="relative">
+                        <input type="password" id="sudoPassword" required class="w-full px-4 py-3 pl-10 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent" placeholder="Enter your password">
+                        <i class="fas fa-lock absolute left-3 top-3.5 text-gray-400"></i>
+                        <button type="button" onclick="togglePassword('sudoPassword')" class="absolute right-3 top-3.5 text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
+                    <p class="text-sm text-yellow-800">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        Sudo mode will remain active for 10 minutes for your convenience.
+                    </p>
+                </div>
+                
+                <button type="submit" class="w-full bg-orange-600 text-white py-3 rounded-lg font-semibold hover:bg-orange-700 transition-colors">
+                    Enable Sudo Mode
+                </button>
+            </form>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    document.getElementById('sudoForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        handleSudoAuthentication(action, callback);
+    });
+    
+    // Focus password input
+    setTimeout(() => document.getElementById('sudoPassword').focus(), 100);
+}
+
+// Handle sudo authentication
+function handleSudoAuthentication(action, callback) {
+    const password = document.getElementById('sudoPassword').value;
+    
+    // Verify password against current user
+    if (!currentUser || currentUser.password !== password) {
+        showNotification('Incorrect password. Please try again.', 'error');
+        return;
+    }
+    
+    // Create sudo session
+    sudoSession = {
+        enabledAt: Date.now(),
+        expiresAt: Date.now() + SUDO_MODE.DURATION,
+        userId: currentUser.id,
+        action: action
+    };
+    
+    // Store in sessionStorage for persistence
+    sessionStorage.setItem('sudoSession', JSON.stringify(sudoSession));
+    
+    showNotification('Sudo mode enabled for 10 minutes', 'success');
+    closeSudoModal();
+    
+    // Execute the callback
+    callback();
+    
+    // Show sudo mode indicator
+    showSudoIndicator();
+}
+
+// Show sudo mode indicator
+function showSudoIndicator() {
+    // Remove existing indicator
+    const existing = document.getElementById('sudo-indicator');
+    if (existing) existing.remove();
+    
+    const indicator = document.createElement('div');
+    indicator.id = 'sudo-indicator';
+    indicator.className = 'fixed top-4 right-4 bg-yellow-100 border border-yellow-300 rounded-lg px-4 py-2 z-40 flex items-center space-x-2';
+    indicator.innerHTML = `
+        <i class="fas fa-shield-alt text-yellow-600"></i>
+        <span class="text-sm font-medium text-yellow-800">Sudo Mode Active</span>
+        <button onclick="disableSudoMode()" class="text-yellow-600 hover:text-yellow-800">
+            <i class="fas fa-times"></i>
+        </button>
+    `;
+    
+    document.body.appendChild(indicator);
+    
+    // Auto-hide when expires
+    setTimeout(() => {
+        if (isSudoModeActive()) {
+            disableSudoMode();
+        }
+    }, SUDO_MODE.DURATION);
+}
+
+// Disable sudo mode
+function disableSudoMode() {
+    sudoSession = null;
+    sessionStorage.removeItem('sudoSession');
+    
+    const indicator = document.getElementById('sudo-indicator');
+    if (indicator) indicator.remove();
+    
+    showNotification('Sudo mode disabled', 'info');
+}
+
+// Check sudo mode and execute action
+function executeWithSudo(action, callback) {
+    if (SUDO_MODE.REQUIRED_ACTIONS.includes(action)) {
+        requestSudoMode(action, callback);
+    } else {
+        callback();
+    }
+}
+
+// Initialize sudo session on page load
+function initSudoMode() {
+    const stored = sessionStorage.getItem('sudoSession');
+    if (stored) {
+        try {
+            sudoSession = JSON.parse(stored);
+            if (isSudoModeActive()) {
+                showSudoIndicator();
+            } else {
+                sudoSession = null;
+                sessionStorage.removeItem('sudoSession');
+            }
+        } catch (e) {
+            sudoSession = null;
+            sessionStorage.removeItem('sudoSession');
+        }
+    }
+}
+
+// Close sudo modal
+function closeSudoModal() {
+    const modal = document.getElementById('sudo-modal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
 // Modern Email Verification System - Using SendGrid (Industry Standard)
 const EMAIL_VERIFICATION = {
     // Email service configuration (using SendGrid - trusted by GitHub, Uber, Airbnb)
@@ -741,11 +931,260 @@ function completeRegistration(verificationData) {
     }, 1000);
 }
 
-// Close verification modal
-function closeVerificationModal() {
-    const modal = document.getElementById('verification-modal');
+// Show profile modal with sudo-protected actions
+function showProfileModal() {
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center';
+    modal.id = 'profile-modal';
+    modal.innerHTML = `
+        <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4 relative">
+            <button onclick="closeProfileModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+            
+            <div class="text-center mb-8">
+                <div class="w-20 h-20 bg-gradient-to-r from-orange-500 to-orange-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-user text-white text-3xl"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">${currentUser.name}</h2>
+                <p class="text-gray-600">${currentUser.email}</p>
+                ${currentUser.emailVerified ? '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 mt-2">✓ Verified</span>' : '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 mt-2">Not Verified</span>'}
+            </div>
+            
+            <div class="space-y-4">
+                <div class="border-t pt-4">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Account Settings</h3>
+                    
+                    <button onclick="executeWithSudo('change_password', showChangePasswordModal)" class="w-full text-left px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-between group">
+                        <div class="flex items-center">
+                            <i class="fas fa-lock text-gray-400 mr-3 group-hover:text-orange-600"></i>
+                            <span class="text-gray-700">Change Password</span>
+                        </div>
+                        <i class="fas fa-chevron-right text-gray-400 text-sm"></i>
+                    </button>
+                    
+                    <button onclick="executeWithSudo('change_email', showChangeEmailModal)" class="w-full text-left px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-between group">
+                        <div class="flex items-center">
+                            <i class="fas fa-envelope text-gray-400 mr-3 group-hover:text-orange-600"></i>
+                            <span class="text-gray-700">Change Email</span>
+                        </div>
+                        <i class="fas fa-chevron-right text-gray-400 text-sm"></i>
+                    </button>
+                    
+                    <button onclick="executeWithSudo('export_data', exportUserData)" class="w-full text-left px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-between group">
+                        <div class="flex items-center">
+                            <i class="fas fa-download text-gray-400 mr-3 group-hover:text-orange-600"></i>
+                            <span class="text-gray-700">Export My Data</span>
+                        </div>
+                        <i class="fas fa-chevron-right text-gray-400 text-sm"></i>
+                    </button>
+                </div>
+                
+                <div class="border-t pt-4">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Danger Zone</h3>
+                    
+                    <button onclick="executeWithSudo('delete_recipes', deleteAllRecipes)" class="w-full text-left px-4 py-3 border border-red-300 rounded-lg hover:bg-red-50 transition-colors flex items-center justify-between group">
+                        <div class="flex items-center">
+                            <i class="fas fa-trash text-red-400 mr-3"></i>
+                            <span class="text-red-700">Delete All Recipes</span>
+                        </div>
+                        <i class="fas fa-chevron-right text-red-400 text-sm"></i>
+                    </button>
+                    
+                    <button onclick="executeWithSudo('delete_account', deleteAccount)" class="w-full text-left px-4 py-3 border border-red-300 rounded-lg hover:bg-red-50 transition-colors flex items-center justify-between group">
+                        <div class="flex items-center">
+                            <i class="fas fa-user-times text-red-400 mr-3"></i>
+                            <span class="text-red-700">Delete Account</span>
+                        </div>
+                        <i class="fas fa-chevron-right text-red-400 text-sm"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+}
+
+// Close profile modal
+function closeProfileModal() {
+    const modal = document.getElementById('profile-modal');
     if (modal) {
         modal.remove();
+    }
+}
+
+// Change password modal (sudo protected)
+function showChangePasswordModal() {
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center';
+    modal.id = 'change-password-modal';
+    modal.innerHTML = `
+        <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4 relative">
+            <button onclick="closeChangePasswordModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+            
+            <div class="text-center mb-8">
+                <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-lock text-blue-600 text-2xl"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">Change Password</h2>
+                <p class="text-gray-600">Enter your new password below</p>
+            </div>
+            
+            <form id="changePasswordForm" class="space-y-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Current Password</label>
+                    <div class="relative">
+                        <input type="password" id="currentPassword" required class="w-full px-4 py-3 pl-10 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent" placeholder="Enter current password">
+                        <i class="fas fa-lock absolute left-3 top-3.5 text-gray-400"></i>
+                        <button type="button" onclick="togglePassword('currentPassword')" class="absolute right-3 top-3.5 text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">New Password</label>
+                    <div class="relative">
+                        <input type="password" id="newPassword" required minlength="6" class="w-full px-4 py-3 pl-10 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent" placeholder="Enter new password">
+                        <i class="fas fa-lock absolute left-3 top-3.5 text-gray-400"></i>
+                        <button type="button" onclick="togglePassword('newPassword')" class="absolute right-3 top-3.5 text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Confirm New Password</label>
+                    <div class="relative">
+                        <input type="password" id="confirmNewPassword" required minlength="6" class="w-full px-4 py-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent" placeholder="Confirm new password">
+                        <i class="fas fa-lock absolute left-3 top-3.5 text-gray-400"></i>
+                    </div>
+                </div>
+                
+                <button type="submit" class="w-full bg-orange-600 text-white py-3 rounded-lg font-semibold hover:bg-orange-700 transition-colors">
+                    Change Password
+                </button>
+            </form>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    document.getElementById('changePasswordForm').addEventListener('submit', handleChangePassword);
+}
+
+// Handle password change
+function handleChangePassword(e) {
+    e.preventDefault();
+    
+    const currentPassword = document.getElementById('currentPassword').value;
+    const newPassword = document.getElementById('newPassword').value;
+    const confirmPassword = document.getElementById('confirmNewPassword').value;
+    
+    // Verify current password
+    if (currentUser.password !== currentPassword) {
+        showNotification('Current password is incorrect', 'error');
+        return;
+    }
+    
+    // Validate new password
+    if (newPassword !== confirmPassword) {
+        showNotification('New passwords do not match', 'error');
+        return;
+    }
+    
+    if (newPassword.length < 6) {
+        showNotification('Password must be at least 6 characters', 'error');
+        return;
+    }
+    
+    // Update password
+    const users = JSON.parse(localStorage.getItem('flavorlyUsers') || '[]');
+    const userIndex = users.findIndex(u => u.id === currentUser.id);
+    
+    if (userIndex !== -1) {
+        users[userIndex].password = newPassword;
+        localStorage.setItem('flavorlyUsers', JSON.stringify(users));
+        
+        currentUser.password = newPassword;
+        localStorage.setItem('flavorlyUser', JSON.stringify(currentUser));
+        
+        showNotification('Password changed successfully', 'success');
+        closeChangePasswordModal();
+    }
+}
+
+// Close change password modal
+function closeChangePasswordModal() {
+    const modal = document.getElementById('change-password-modal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+// Export user data (sudo protected)
+function exportUserData() {
+    const userData = {
+        profile: {
+            name: currentUser.name,
+            email: currentUser.email,
+            createdAt: currentUser.createdAt,
+            emailVerified: currentUser.emailVerified
+        },
+        preferences: currentUser.preferences || {},
+        savedRecipes: currentUser.savedRecipes || [],
+        exportDate: new Date().toISOString()
+    };
+    
+    const dataStr = JSON.stringify(userData, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `flavorly-data-${currentUser.email.replace(/[^a-zA-Z0-9]/g, '_')}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    
+    showNotification('Your data has been exported', 'success');
+}
+
+// Delete all recipes (sudo protected)
+function deleteAllRecipes() {
+    if (confirm('Are you sure you want to delete all your saved recipes? This action cannot be undone.')) {
+        const users = JSON.parse(localStorage.getItem('flavorlyUsers') || '[]');
+        const userIndex = users.findIndex(u => u.id === currentUser.id);
+        
+        if (userIndex !== -1) {
+            users[userIndex].savedRecipes = [];
+            localStorage.setItem('flavorlyUsers', JSON.stringify(users));
+            
+            currentUser.savedRecipes = [];
+            localStorage.setItem('flavorlyUser', JSON.stringify(currentUser));
+            
+            showNotification('All recipes deleted successfully', 'success');
+        }
+    }
+}
+
+// Delete account (sudo protected)
+function deleteAccount() {
+    if (confirm('Are you sure you want to delete your account? This action cannot be undone and will delete all your data.')) {
+        if (confirm('This is permanent. Are you absolutely sure?')) {
+            const users = JSON.parse(localStorage.getItem('flavorlyUsers') || '[]');
+            const filteredUsers = users.filter(u => u.id !== currentUser.id);
+            
+            localStorage.setItem('flavorlyUsers', JSON.stringify(filteredUsers));
+            localStorage.removeItem('flavorlyUser');
+            sessionStorage.removeItem('sudoSession');
+            
+            showNotification('Your account has been deleted', 'success');
+            logout();
+        }
     }
 }
 
