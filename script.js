@@ -1719,111 +1719,119 @@ function handlePasswordReset(e) {
     }
 }
 
-// Handle login
-document.getElementById('loginForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    const email = document.getElementById('loginEmail').value;
-    const password = document.getElementById('loginPassword').value;
-    
-    console.log('=== LOGIN DEBUG ===');
-    console.log('Login attempt:', { email, password });
-    
-    // Get users from localStorage
-    const users = JSON.parse(localStorage.getItem('flavorlyUsers') || '[]');
-    console.log('All users in storage:', users);
-    console.log('Number of users:', users.length);
-    
-    // Find user
-    const user = users.find(u => u.email === email && u.password === password);
-    console.log('Found user:', user);
-    
-    if (user) {
-        console.log('✅ Login successful!');
-        currentUser = user;
-        localStorage.setItem('flavorlyUser', JSON.stringify(user));
+// Handle login (only add event listener if form exists and doesn't already have one)
+const loginForm = document.getElementById('loginForm');
+if (loginForm && !loginForm.hasAttribute('data-listener-attached')) {
+    loginForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const email = document.getElementById('loginEmail').value;
+        const password = document.getElementById('loginPassword').value;
+        
+        console.log('=== LOGIN DEBUG ===');
+        console.log('Login attempt:', { email, password });
+        
+        // Get users from localStorage
+        const users = JSON.parse(localStorage.getItem('flavorlyUsers') || '[]');
+        console.log('All users in storage:', users);
+        console.log('Number of users:', users.length);
+        
+        // Find user
+        const user = users.find(u => u.email === email && u.password === password);
+        console.log('Found user:', user);
+        
+        if (user) {
+            console.log('✅ Login successful!');
+            currentUser = user;
+            localStorage.setItem('flavorlyUser', JSON.stringify(user));
+            updateUIForLoggedInUser();
+            closeAuthModal();
+            showNotification('Welcome back, ' + user.name + '!', 'success');
+            
+            // Reset form
+            loginForm.reset();
+        } else {
+            console.log('❌ Login failed. Checking for email match only...');
+            const emailMatch = users.find(u => u.email === email);
+            console.log('Email match found:', emailMatch);
+            
+            if (!emailMatch) {
+                console.log('❌ No user found with this email. You may need to sign up first.');
+                showNotification('No account found with this email. Please sign up first.', 'error');
+            } else {
+                console.log('❌ Email found but password incorrect.');
+                showNotification('Incorrect password. Try again or use "Forgot password".', 'error');
+            }
+        }
+        console.log('=== END LOGIN DEBUG ===');
+    });
+    loginForm.setAttribute('data-listener-attached', 'true');
+}
+
+// Handle signup (only add event listener if form exists and doesn't already have one)
+const signupForm = document.getElementById('signupForm');
+if (signupForm && !signupForm.hasAttribute('data-listener-attached')) {
+    signupForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const name = document.getElementById('signupName').value;
+        const email = document.getElementById('signupEmail').value;
+        const password = document.getElementById('signupPassword').value;
+        const confirmPassword = document.getElementById('signupConfirmPassword').value;
+        const terms = document.getElementById('terms').checked;
+        
+        console.log('Signup attempt:', { name, email, password, confirmPassword, terms });
+        
+        // Validation
+        if (password !== confirmPassword) {
+            showNotification('Passwords do not match', 'error');
+            return;
+        }
+        
+        if (!terms) {
+            showNotification('Please accept the terms and conditions', 'error');
+            return;
+        }
+        
+        // Get users from localStorage
+        const users = JSON.parse(localStorage.getItem('flavorlyUsers') || '[]');
+        console.log('Existing users before signup:', users);
+        
+        // Check if user already exists
+        if (users.find(u => u.email === email)) {
+            showNotification('An account with this email already exists', 'error');
+            return;
+        }
+        
+        // Create new user
+        const newUser = {
+            id: Date.now().toString(),
+            name: name,
+            email: email,
+            password: password, // In production, this should be hashed
+            createdAt: new Date().toISOString(),
+            savedRecipes: []
+        };
+        
+        console.log('Creating new user:', newUser);
+        
+        users.push(newUser);
+        localStorage.setItem('flavorlyUsers', JSON.stringify(users));
+        
+        console.log('Users after signup:', JSON.parse(localStorage.getItem('flavorlyUsers')));
+        
+        // Auto login
+        currentUser = newUser;
+        localStorage.setItem('flavorlyUser', JSON.stringify(newUser));
         updateUIForLoggedInUser();
-        closeLoginModal();
-        showNotification('Welcome back, ' + user.name + '!', 'success');
+        closeAuthModal();
+        showNotification('Welcome to Flavorly, ' + name + '!', 'success');
         
         // Reset form
-        document.getElementById('loginForm').reset();
-    } else {
-        console.log('❌ Login failed. Checking for email match only...');
-        const emailMatch = users.find(u => u.email === email);
-        console.log('Email match found:', emailMatch);
-        
-        if (!emailMatch) {
-            console.log('❌ No user found with this email. You may need to sign up first.');
-            showNotification('No account found with this email. Please sign up first.', 'error');
-        } else {
-            console.log('❌ Email found but password incorrect.');
-            showNotification('Incorrect password. Try again or use "Forgot password".', 'error');
-        }
-    }
-    console.log('=== END LOGIN DEBUG ===');
-});
-
-// Handle signup
-document.getElementById('signupForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    const name = document.getElementById('signupName').value;
-    const email = document.getElementById('signupEmail').value;
-    const password = document.getElementById('signupPassword').value;
-    const confirmPassword = document.getElementById('signupConfirmPassword').value;
-    const terms = document.getElementById('terms').checked;
-    
-    console.log('Signup attempt:', { name, email, password, confirmPassword, terms });
-    
-    // Validation
-    if (password !== confirmPassword) {
-        showNotification('Passwords do not match', 'error');
-        return;
-    }
-    
-    if (!terms) {
-        showNotification('Please accept the terms and conditions', 'error');
-        return;
-    }
-    
-    // Get users from localStorage
-    const users = JSON.parse(localStorage.getItem('flavorlyUsers') || '[]');
-    console.log('Existing users before signup:', users);
-    
-    // Check if user already exists
-    if (users.find(u => u.email === email)) {
-        showNotification('An account with this email already exists', 'error');
-        return;
-    }
-    
-    // Create new user
-    const newUser = {
-        id: Date.now().toString(),
-        name: name,
-        email: email,
-        password: password,
-        createdAt: new Date().toISOString(),
-        savedRecipes: []
-    };
-    
-    console.log('Creating new user:', newUser);
-    
-    users.push(newUser);
-    localStorage.setItem('flavorlyUsers', JSON.stringify(users));
-    
-    console.log('Users after signup:', JSON.parse(localStorage.getItem('flavorlyUsers')));
-    
-    // Auto login
-    currentUser = newUser;
-    localStorage.setItem('flavorlyUser', JSON.stringify(newUser));
-    updateUIForLoggedInUser();
-    closeSignupModal();
-    showNotification('Account created successfully! Welcome to Flavorly!', 'success');
-    
-    // Reset form
-    document.getElementById('signupForm').reset();
-});
+        signupForm.reset();
+    });
+    signupForm.setAttribute('data-listener-attached', 'true');
+}
 
 // Logout function
 function logout() {
@@ -2130,40 +2138,44 @@ function parseAIResponse(response, aiModel, healthStatus, dietary, cuisine, flav
     }
 }
 
-// Handle recipe form submission with AI
-document.getElementById('recipe-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    const ingredients = document.getElementById('ingredients').value.split(',').map(i => i.trim()).filter(i => i);
-    const dishType = document.getElementById('dish-type').value;
-    const cookingTime = document.getElementById('cooking-time').value;
-    const difficulty = document.querySelector('input[name="difficulty"]:checked').value;
-    const healthStatus = document.querySelector('input[name="health-status"]:checked').value;
-    const dietary = document.getElementById('dietary').value;
-    const cuisine = document.getElementById('cuisine').value;
-    
-    // Get selected flavors
-    const flavorCheckboxes = document.querySelectorAll('input[type="checkbox"]:checked');
-    const flavors = Array.from(flavorCheckboxes).map(cb => cb.value);
-    
-    // Build enhanced prompt with all preferences
-    const enhancedPrompt = `${dishType || 'Any dish'} with ${cookingTime ? cookingTime + ' cooking time' : 'any cooking time'}, ${difficulty} difficulty level`;
-    
-    showRecipeLoading();
-    
-    // Generate recipe with AI (always use Gemma)
-    const recipe = await generateRecipeWithAI(ingredients, enhancedPrompt, healthStatus, dietary, cuisine, flavors, 'gemma');
-    
-    if (recipe) {
-        // Add the new fields to the recipe object
-        recipe.cookingTime = cookingTime;
-        recipe.difficulty = difficulty;
+// Handle recipe form submission with AI (only add event listener if form exists and doesn't already have one)
+const recipeForm = document.getElementById('recipe-form');
+if (recipeForm && !recipeForm.hasAttribute('data-listener-attached')) {
+    recipeForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
         
-        displayRecipe(recipe);
-    } else {
-        displayNoRecipe();
-    }
-});
+        const ingredients = document.getElementById('ingredients').value.split(',').map(i => i.trim()).filter(i => i);
+        const dishType = document.getElementById('dish-type').value;
+        const cookingTime = document.getElementById('cooking-time').value;
+        const difficulty = document.querySelector('input[name="difficulty"]:checked').value;
+        const healthStatus = document.querySelector('input[name="health-status"]:checked').value;
+        const dietary = document.getElementById('dietary').value;
+        const cuisine = document.getElementById('cuisine').value;
+        
+        // Get selected flavors
+        const flavorCheckboxes = document.querySelectorAll('input[type="checkbox"]:checked');
+        const flavors = Array.from(flavorCheckboxes).map(cb => cb.value);
+        
+        // Build enhanced prompt with all preferences
+        const enhancedPrompt = `${dishType || 'Any dish'} with ${cookingTime ? cookingTime + ' cooking time' : 'any cooking time'}, ${difficulty} difficulty level`;
+        
+        showRecipeLoading();
+        
+        // Generate recipe with AI (always use Gemma)
+        const recipe = await generateRecipeWithAI(ingredients, enhancedPrompt, healthStatus, dietary, cuisine, flavors, 'gemma');
+        
+        if (recipe) {
+            // Add the new fields to the recipe object
+            recipe.cookingTime = cookingTime;
+            recipe.difficulty = difficulty;
+            
+            displayRecipe(recipe);
+        } else {
+            displayNoRecipe();
+        }
+    });
+    recipeForm.setAttribute('data-listener-attached', 'true');
+}
 
 // Generate random recipe
 function generateRandomRecipe() {
