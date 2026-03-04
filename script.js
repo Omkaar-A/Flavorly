@@ -408,10 +408,10 @@ function updateUIForLoggedInUser() {
     }
 }
 
-// Modern Email Verification System - Like GitHub/Modern Websites
+// Modern Email Verification System - Using SendGrid (Industry Standard)
 const EMAIL_VERIFICATION = {
-    // Email service configuration (using Resend - modern email API)
-    API_KEY: '', // Will be injected from GitHub Secrets
+    // Email service configuration (using SendGrid - trusted by GitHub, Uber, Airbnb)
+    API_KEY: '', // Will be injected from GitHub Secrets (SENDGRID_API_KEY)
     FROM_EMAIL: 'noreply@flavorly.app',
     BASE_URL: window.location.origin,
     
@@ -426,7 +426,7 @@ function generateVerificationCode() {
     return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
-// Send verification email using modern email API
+// Send verification email using SendGrid API (industry standard)
 async function sendVerificationEmail(email, code, type = 'verification') {
     try {
         const subject = type === 'verification' 
@@ -437,27 +437,32 @@ async function sendVerificationEmail(email, code, type = 'verification') {
             ? generateVerificationEmailHTML(code)
             : generatePasswordResetEmailHTML(code);
 
-        const response = await fetch('https://api.resend.com/emails', {
+        const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${EMAIL_VERIFICATION.API_KEY}`,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                from: EMAIL_VERIFICATION.FROM_EMAIL,
-                to: [email],
-                subject: subject,
-                html: htmlContent
+                personalizations: [{
+                    to: [{ email: email }],
+                    subject: subject
+                }],
+                from: { email: EMAIL_VERIFICATION.FROM_EMAIL, name: 'Flavorly' },
+                content: [{
+                    type: 'text/html',
+                    value: htmlContent
+                }]
             })
         });
 
         if (!response.ok) {
-            throw new Error(`Email service error: ${response.status}`);
+            throw new Error(`SendGrid API error: ${response.status}`);
         }
 
         return { success: true };
     } catch (error) {
-        console.error('Email sending failed:', error);
+        console.error('SendGrid email sending failed:', error);
         return { success: false, error: error.message };
     }
 }
