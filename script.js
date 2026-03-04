@@ -610,8 +610,8 @@ function showRecipeGenerator() {
 const AI_CONFIG = {
     gemma: {
         apiKey: process.env.GEMMA_API_KEY || '', // GitHub secret: GEMMA_API_KEY
-        endpoint: 'https://generativelanguage.googleapis.com/v1beta/models/gemma-2-2b-it:generateContent',
-        model: 'gemma-2-2b-it'
+        endpoint: 'https://generativelanguage.googleapis.com/v1beta/models/gemma:generateContent',
+        model: 'gemma'
     }
 };
 
