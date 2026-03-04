@@ -262,9 +262,52 @@
                         <textarea id="ingredients" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent" placeholder="Enter ingredients you have (e.g., chicken, tomatoes, rice, onions)... Leave empty if you want AI to suggest ingredients"></textarea>
                     </div>
                     
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Recipe Category</label>
+                            <select id="dish-type" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent">
+                                <option value="">Any category</option>
+                                <option value="breakfast">🌅 Breakfast</option>
+                                <option value="lunch">☀️ Lunch</option>
+                                <option value="dinner">🌙 Dinner</option>
+                                <option value="appetizer">🥟 Appetizer</option>
+                                <option value="dessert">🍰 Dessert</option>
+                                <option value="snack">🍿 Snack</option>
+                                <option value="beverage">🥤 Beverage</option>
+                                <option value="soup">🍲 Soup</option>
+                                <option value="salad">🥗 Salad</option>
+                                <option value="main course">🍽️ Main Course</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Cooking Time</label>
+                            <select id="cooking-time" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent">
+                                <option value="">Any time</option>
+                                <option value="quick">⚡ Quick (under 15 min)</option>
+                                <option value="medium">🕐 Medium (15-45 min)</option>
+                                <option value="long">🕰️ Long (45+ min)</option>
+                                <option value="slow-cooker">🍯 Slow Cooker</option>
+                            </select>
+                        </div>
+                    </div>
+                    
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">What do you want to make?</label>
-                        <input type="text" id="dish-type" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent" placeholder="e.g., pasta, soup, salad, sandwich...">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Difficulty Level</label>
+                        <div class="flex space-x-4">
+                            <label class="inline-flex items-center">
+                                <input type="radio" name="difficulty" value="easy" checked class="form-radio text-orange-600">
+                                <span class="ml-2">🟢 Easy</span>
+                            </label>
+                            <label class="inline-flex items-center">
+                                <input type="radio" name="difficulty" value="medium" class="form-radio text-orange-600">
+                                <span class="ml-2">🟡 Medium</span>
+                            </label>
+                            <label class="inline-flex items-center">
+                                <input type="radio" name="difficulty" value="hard" class="form-radio text-orange-600">
+                                <span class="ml-2">🔴 Hard</span>
+                            </label>
+                        </div>
                     </div>
                     
                     <div>
@@ -272,11 +315,11 @@
                         <div class="flex space-x-4">
                             <label class="inline-flex items-center">
                                 <input type="radio" name="health-status" value="healthy" checked class="form-radio text-orange-600">
-                                <span class="ml-2">Feeling good</span>
+                                <span class="ml-2">😊 Feeling good</span>
                             </label>
                             <label class="inline-flex items-center">
                                 <input type="radio" name="health-status" value="sick" class="form-radio text-orange-600">
-                                <span class="ml-2">Feeling sick</span>
+                                <span class="ml-2">🤒 Feeling sick</span>
                             </label>
                         </div>
                     </div>
@@ -286,11 +329,14 @@
                             <label class="block text-sm font-medium text-gray-700 mb-2">Dietary Preferences</label>
                             <select id="dietary" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent">
                                 <option value="">No restrictions</option>
-                                <option value="vegetarian">Vegetarian</option>
-                                <option value="vegan">Vegan</option>
-                                <option value="gluten-free">Gluten-free</option>
-                                <option value="keto">Keto</option>
-                                <option value="paleo">Paleo</option>
+                                <option value="vegetarian">🥬 Vegetarian</option>
+                                <option value="vegan">🌱 Vegan</option>
+                                <option value="gluten-free">🌾 Gluten-free</option>
+                                <option value="keto">🥑 Keto</option>
+                                <option value="paleo">🦴 Paleo</option>
+                                <option value="dairy-free">🥛 Dairy-free</option>
+                                <option value="low-carb">🥦 Low-carb</option>
+                                <option value="low-sodium">🧂 Low-sodium</option>
                             </select>
                         </div>
                         
@@ -298,11 +344,16 @@
                             <label class="block text-sm font-medium text-gray-700 mb-2">Cuisine Preference</label>
                             <select id="cuisine" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent">
                                 <option value="">Any cuisine</option>
-                                <option value="italian">Italian</option>
-                                <option value="mexican">Mexican</option>
-                                <option value="asian">Asian</option>
-                                <option value="mediterranean">Mediterranean</option>
-                                <option value="american">American</option>
+                                <option value="italian">🇮🇹 Italian</option>
+                                <option value="mexican">🇲🇽 Mexican</option>
+                                <option value="asian">🥢 Asian</option>
+                                <option value="mediterranean">🫒 Mediterranean</option>
+                                <option value="american">🇺🇸 American</option>
+                                <option value="indian">🇮🇳 Indian</option>
+                                <option value="french">🇫🇷 French</option>
+                                <option value="thai">🇹🇭 Thai</option>
+                                <option value="japanese">🇯🇵 Japanese</option>
+                                <option value="greek">🇬🇷 Greek</option>
                             </select>
                         </div>
                     </div>
@@ -312,26 +363,47 @@
                         <div class="flex flex-wrap gap-2">
                             <label class="inline-flex items-center">
                                 <input type="checkbox" class="form-checkbox text-purple-600" value="spicy">
-                                <span class="ml-2">Spicy</span>
+                                <span class="ml-2">🌶️ Spicy</span>
                             </label>
                             <label class="inline-flex items-center">
                                 <input type="checkbox" class="form-checkbox text-purple-600" value="sweet">
-                                <span class="ml-2">Sweet</span>
+                                <span class="ml-2">🍯 Sweet</span>
                             </label>
                             <label class="inline-flex items-center">
                                 <input type="checkbox" class="form-checkbox text-purple-600" value="savory">
-                                <span class="ml-2">Savory</span>
+                                <span class="ml-2">🧀 Savory</span>
                             </label>
                             <label class="inline-flex items-center">
                                 <input type="checkbox" class="form-checkbox text-purple-600" value="tangy">
-                                <span class="ml-2">Tangy</span>
+                                <span class="ml-2">🍋 Tangy</span>
+                            </label>
+                            <label class="inline-flex items-center">
+                                <input type="checkbox" class="form-checkbox text-purple-600" value="smoky">
+                                <span class="ml-2">💨 Smoky</span>
+                            </label>
+                            <label class="inline-flex items-center">
+                                <input type="checkbox" class="form-checkbox text-purple-600" value="herbal">
+                                <span class="ml-2">🌿 Herbal</span>
+                            </label>
+                            <label class="inline-flex items-center">
+                                <input type="checkbox" class="form-checkbox text-purple-600" value="creamy">
+                                <span class="ml-2">🥛 Creamy</span>
+                            </label>
+                            <label class="inline-flex items-center">
+                                <input type="checkbox" class="form-checkbox text-purple-600" value="crunchy">
+                                <span class="ml-2">🥨 Crunchy</span>
                             </label>
                         </div>
                     </div>
                     
-                    <button type="submit" class="w-full bg-purple-600 text-white py-3 rounded-lg font-semibold hover:bg-purple-700 transition-colors">
-                        Generate Recipe
-                    </button>
+                    <div class="flex gap-4">
+                        <button type="submit" class="flex-1 bg-purple-600 text-white py-3 rounded-lg font-semibold hover:bg-purple-700 transition-colors">
+                            <i class="fas fa-magic mr-2"></i>Generate Recipe
+                        </button>
+                        <button type="button" onclick="generateRandomRecipe()" class="bg-gray-200 text-gray-800 px-6 py-3 rounded-lg font-semibold hover:bg-gray-300 transition-colors">
+                            <i class="fas fa-dice mr-2"></i>Surprise Me
+                        </button>
+                    </div>
                 </form>
                 
                 <!-- Recipe Result -->

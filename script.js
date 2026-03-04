@@ -1916,29 +1916,56 @@ async function generateRecipeWithAI(ingredients, dishType, healthStatus, dietary
 function createRecipePrompt(ingredients, dishType, healthStatus, dietary, cuisine, flavors) {
     const hasIngredients = ingredients && ingredients.length > 0 && ingredients[0] !== '';
     
-    return `Create a detailed recipe based on these preferences:
+    return `You are a professional chef with expertise in multiple cuisines and dietary requirements. Create a detailed, practical recipe based on these preferences:
 
-${hasIngredients ? `Ingredients available: ${ingredients.join(', ')}` : 'No specific ingredients provided - suggest common ingredients'}
-Dish type requested: ${dishType || 'Any'}
-Health status: ${healthStatus}
-Dietary restrictions: ${dietary || 'None'}
-Cuisine preference: ${cuisine || 'Any'}
-Flavor preferences: ${flavors.length > 0 ? flavors.join(', ') : 'None'}
+${hasIngredients ? `MAIN INGREDIENTS: ${ingredients.join(', ')}` : 'NO SPECIFIC INGREDIENTS - Suggest common, readily available ingredients'}
+DISH TYPE: ${dishType || 'Any suitable dish'}
+HEALTH CONSIDERATIONS: ${healthStatus || 'General health'}
+DIETARY RESTRICTIONS: ${dietary || 'No restrictions'}
+CUISINE STYLE: ${cuisine || 'International fusion'}
+FLAVOR PROFILE: ${flavors.length > 0 ? flavors.join(', ') : 'Balanced flavors'}
 
-${!hasIngredients ? 'Please suggest a complete ingredient list for this recipe.' : 'Use the provided ingredients and suggest additional ones if needed.'}
+REQUIREMENTS:
+- Use fresh, seasonal ingredients when possible
+- Include accurate cooking times and temperatures
+- Provide clear, step-by-step instructions
+- Consider skill level and preparation time
+- Add professional cooking tips and variations
+- Ensure nutritional balance for the health status
+- Respect all dietary restrictions strictly
+- Match the cuisine style authentically
+- Balance flavors according to preferences
 
-Please respond with a JSON object in this exact format:
+${!hasIngredients ? 'SUGGEST a complete shopping list with quantities for 4 servings.' : 'USE provided ingredients efficiently and suggest only essential additional items.'}
+
+RESPOND WITH THIS EXACT JSON FORMAT:
 {
-    "name": "Recipe Name",
-    "description": "Brief description of the dish",
-    "time": "Total time in minutes",
-    "difficulty": "Easy/Medium/Hard",
-    "ingredients": ["ingredient1", "ingredient2", "ingredient3"],
-    "instructions": ["Step 1", "Step 2", "Step 3"],
-    "tips": "Optional cooking tips"
+    "name": "Creative Recipe Name",
+    "description": "Appetizing description highlighting key flavors and textures",
+    "prepTime": "Preparation time in minutes",
+    "cookTime": "Cooking time in minutes", 
+    "totalTime": "Total time in minutes",
+    "servings": "Number of servings",
+    "difficulty": "Easy|Medium|Hard",
+    "category": "${dishType || 'Main Course'}",
+    "cuisine": "${cuisine || 'International'}",
+    "ingredients": [
+        {"item": "ingredient name", "amount": "quantity", "unit": "measurement unit"}
+    ],
+    "instructions": [
+        {"step": 1, "action": "Clear action description", "time": "estimated time in minutes"}
+    ],
+    "nutrition": {
+        "calories": "approximate per serving",
+        "protein": "grams",
+        "carbs": "grams", 
+        "fat": "grams"
+    },
+    "tips": "Professional cooking tips, storage suggestions, or variation ideas",
+    "equipment": ["List of required kitchen tools"]
 }
 
-Make sure the recipe is practical, matches all preferences exactly, and provides clear cooking instructions.`;
+Ensure the recipe is restaurant-quality, practical for home cooking, and follows all specified preferences exactly.`;
 }
 
 async function callGemmaAPI(config, prompt) {
@@ -1999,62 +2026,193 @@ async function callGemmaAPI(config, prompt) {
 }
 
 function parseAIResponse(response, aiModel, healthStatus, dietary, cuisine, flavors) {
+    console.log('=== PARSING AI RESPONSE ===');
+    console.log('Raw response:', response);
+    
     try {
-        // Extract JSON from the response
+        // Try to extract JSON from the response
+        let jsonStr = response;
+        
+        // Look for JSON object in the response
         const jsonMatch = response.match(/\{[\s\S]*\}/);
-        if (!jsonMatch) {
-            throw new Error('No JSON found in response');
+        if (jsonMatch) {
+            jsonStr = jsonMatch[0];
         }
         
-        const recipeData = JSON.parse(jsonMatch[0]);
+        console.log('Extracted JSON string:', jsonStr);
         
-        // Convert to our recipe format
-        return {
-            name: recipeData.name || 'Generated Recipe',
-            description: recipeData.description || 'AI-generated recipe based on your preferences',
-            time: recipeData.time || '30 mins',
-            difficulty: recipeData.difficulty || 'Medium',
-            ingredients: recipeData.ingredients || [],
-            instructions: recipeData.instructions || [],
-            tips: recipeData.tips || '',
-            healthStatus: healthStatus || 'healthy',
-            dietary: dietary || '',
-            cuisine: cuisine || '',
-            flavor: flavors || [],
-            aiGenerated: true,
-            aiModel: aiModel
+        let recipe;
+        try {
+            recipe = JSON.parse(jsonStr);
+        } catch (parseError) {
+            console.error('JSON parse failed, trying to fix common issues...');
+            
+            // Try to fix common JSON issues
+            jsonStr = jsonStr
+                .replace(/,\s*}/g, '}')  // Remove trailing commas
+                .replace(/,\s*]/g, ']')  // Remove trailing commas in arrays
+                .replace(/\\'/g, "'")   // Fix escaped quotes
+                .replace(/\\"/g, '"'); // Fix double-escaped quotes
+                
+            console.log('Fixed JSON string:', jsonStr);
+            recipe = JSON.parse(jsonStr);
+        }
+        
+        console.log('Parsed recipe:', recipe);
+        
+        // Validate required fields
+        if (!recipe.name) {
+            throw new Error('Recipe name is missing');
+        }
+        
+        // Set defaults for missing fields
+        recipe.prepTime = recipe.prepTime || '15';
+        recipe.cookTime = recipe.cookTime || '30';
+        recipe.totalTime = recipe.totalTime || recipe.time || '45';
+        recipe.servings = recipe.servings || '4';
+        recipe.difficulty = recipe.difficulty || 'Medium';
+        recipe.category = recipe.category || 'Main Course';
+        recipe.cuisine = recipe.cuisine || cuisine || 'International';
+        recipe.ingredients = recipe.ingredients || ['Check recipe for ingredients'];
+        recipe.instructions = recipe.instructions || ['Follow recipe instructions'];
+        recipe.tips = recipe.tips || 'Enjoy your meal!';
+        recipe.equipment = recipe.equipment || ['Basic kitchen tools'];
+        recipe.nutrition = recipe.nutrition || {
+            calories: '250',
+            protein: '15g',
+            carbs: '30g',
+            fat: '10g'
         };
+        
+        // Add metadata
+        recipe.aiGenerated = true;
+        recipe.aiModel = aiModel;
+        recipe.healthStatus = healthStatus;
+        recipe.dietary = dietary;
+        recipe.flavors = flavors;
+        
+        return recipe;
     } catch (error) {
         console.error('Failed to parse AI response:', error);
-        throw new Error('Invalid AI response format');
+        console.error('Response was:', response);
+        
+        // Return a fallback recipe
+        return {
+            name: 'AI Generated Recipe',
+            description: 'A delicious recipe created just for you!',
+            prepTime: '15',
+            cookTime: '30',
+            totalTime: '45',
+            servings: '4',
+            difficulty: 'Medium',
+            category: 'Main Course',
+            cuisine: cuisine || 'International',
+            ingredients: ['Fresh ingredients', 'Seasonal vegetables', 'Quality protein'],
+            instructions: [
+                { step: 1, action: 'Prepare all ingredients', time: '10' },
+                { step: 2, action: 'Cook according to recipe', time: '30' },
+                { step: 3, action: 'Serve and enjoy', time: '5' }
+            ],
+            tips: 'Follow proper food safety guidelines and enjoy your meal!',
+            equipment: ['Basic kitchen tools', 'Cooking utensils'],
+            nutrition: {
+                calories: '250',
+                protein: '15g',
+                carbs: '30g',
+                fat: '10g'
+            },
+            aiGenerated: true,
+            aiModel: aiModel,
+            healthStatus: healthStatus,
+            dietary: dietary,
+            flavors: flavors
+        };
     }
 }
 
 // Handle recipe form submission with AI
-document.getElementById('recipe-form').addEventListener('submit', async function(e) {
+document.getElementById('recipe-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     
-    const ingredientsInput = document.getElementById('ingredients').value;
-    const ingredients = ingredientsInput ? ingredientsInput.toLowerCase().split(',').map(i => i.trim()).filter(i => i) : [];
-    const dishType = document.getElementById('dish-type').value.toLowerCase();
+    const ingredients = document.getElementById('ingredients').value.split(',').map(i => i.trim()).filter(i => i);
+    const dishType = document.getElementById('dish-type').value;
+    const cookingTime = document.getElementById('cooking-time').value;
+    const difficulty = document.querySelector('input[name="difficulty"]:checked').value;
     const healthStatus = document.querySelector('input[name="health-status"]:checked').value;
     const dietary = document.getElementById('dietary').value;
     const cuisine = document.getElementById('cuisine').value;
+    
+    // Get selected flavors
     const flavorCheckboxes = document.querySelectorAll('input[type="checkbox"]:checked');
     const flavors = Array.from(flavorCheckboxes).map(cb => cb.value);
     
-    // Show loading state
+    // Build enhanced prompt with all preferences
+    const enhancedPrompt = `${dishType || 'Any dish'} with ${cookingTime ? cookingTime + ' cooking time' : 'any cooking time'}, ${difficulty} difficulty level`;
+    
     showRecipeLoading();
     
     // Generate recipe with AI (always use Gemma)
-    const recipe = await generateRecipeWithAI(ingredients, dishType, healthStatus, dietary, cuisine, flavors, 'gemma');
+    const recipe = await generateRecipeWithAI(ingredients, enhancedPrompt, healthStatus, dietary, cuisine, flavors, 'gemma');
     
     if (recipe) {
+        // Add the new fields to the recipe object
+        recipe.cookingTime = cookingTime;
+        recipe.difficulty = difficulty;
+        
         displayRecipe(recipe);
     } else {
         displayNoRecipe();
     }
 });
+
+// Generate random recipe
+function generateRandomRecipe() {
+    const categories = ['breakfast', 'lunch', 'dinner', 'appetizer', 'dessert', 'snack'];
+    const times = ['quick', 'medium', 'long'];
+    const difficulties = ['easy', 'medium', 'hard'];
+    const cuisines = ['italian', 'mexican', 'asian', 'mediterranean', 'american', 'indian'];
+    const healthStatuses = ['healthy', 'sick'];
+    const dietaries = ['', 'vegetarian', 'vegan', 'gluten-free', 'keto'];
+    const flavors = ['spicy', 'sweet', 'savory', 'tangy'];
+    
+    // Random selections
+    const randomCategory = categories[Math.floor(Math.random() * categories.length)];
+    const randomTime = times[Math.floor(Math.random() * times.length)];
+    const randomDifficulty = difficulties[Math.floor(Math.random() * difficulties.length)];
+    const randomCuisine = cuisines[Math.floor(Math.random() * cuisines.length)];
+    const randomHealth = healthStatuses[Math.floor(Math.random() * healthStatuses.length)];
+    const randomDietary = dietaries[Math.floor(Math.random() * dietaries.length)];
+    const randomFlavorCount = Math.floor(Math.random() * 3) + 1;
+    const randomFlavors = [];
+    
+    for (let i = 0; i < randomFlavorCount; i++) {
+        const flavor = flavors[Math.floor(Math.random() * flavors.length)];
+        if (!randomFlavors.includes(flavor)) {
+            randomFlavors.push(flavor);
+        }
+    }
+    
+    // Set form values
+    document.getElementById('dish-type').value = randomCategory;
+    document.getElementById('cooking-time').value = randomTime;
+    document.querySelector(`input[name="difficulty"][value="${randomDifficulty}"]`).checked = true;
+    document.querySelector(`input[name="health-status"][value="${randomHealth}"]`).checked = true;
+    document.getElementById('dietary').value = randomDietary;
+    document.getElementById('cuisine').value = randomCuisine;
+    
+    // Clear and set flavors
+    document.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+    randomFlavors.forEach(flavor => {
+        const checkbox = document.querySelector(`input[type="checkbox"][value="${flavor}"]`);
+        if (checkbox) checkbox.checked = true;
+    });
+    
+    // Show notification
+    showNotification('🎲 Random preferences set! Click Generate Recipe!', 'info');
+    
+    // Scroll to form
+    document.getElementById('recipe-form').scrollIntoView({ behavior: 'smooth' });
+}
 
 function showRecipeLoading() {
     const resultDiv = document.getElementById('recipe-result');
@@ -2082,19 +2240,38 @@ function displayRecipe(recipe) {
     const aiBadge = recipe.aiGenerated ? 
         `<span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full"><i class="fas fa-robot mr-1"></i>${recipe.aiModel.toUpperCase()}</span>` : '';
     
+    // Handle both old and new recipe formats
+    const totalTime = recipe.totalTime || recipe.time;
+    const difficulty = recipe.difficulty || 'Medium';
+    const servings = recipe.servings || '4';
+    const cuisine = recipe.cuisine || 'International';
+    const category = recipe.category || 'Main Course';
+    
     contentDiv.innerHTML = `
         <div class="bg-gradient-to-r from-orange-50 to-yellow-50 p-6 rounded-lg mb-6">
-            <h4 class="text-2xl font-bold text-gray-800 mb-2">${recipe.name}</h4>
-            <p class="text-gray-600 mb-4">${recipe.description}</p>
-            <div class="flex flex-wrap gap-4 text-sm">
+            <div class="flex justify-between items-start mb-4">
+                <div>
+                    <h4 class="text-3xl font-bold text-gray-800 mb-2">${recipe.name}</h4>
+                    <p class="text-gray-600 text-lg">${recipe.description}</p>
+                </div>
+                <div class="flex gap-2">
+                    ${recipe.category ? `<span class="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm">
+                        <i class="fas fa-utensils mr-1"></i> ${recipe.category}
+                    </span>` : ''}
+                </div>
+            </div>
+            <div class="flex flex-wrap gap-3 text-sm">
                 <span class="bg-orange-100 text-orange-800 px-3 py-1 rounded-full">
-                    <i class="fas fa-clock mr-1"></i> ${recipe.time}
+                    <i class="fas fa-clock mr-1"></i> ${totalTime} min
                 </span>
                 <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full">
-                    <i class="fas fa-signal mr-1"></i> ${recipe.difficulty}
+                    <i class="fas fa-signal mr-1"></i> ${difficulty}
                 </span>
                 <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full">
-                    <i class="fas fa-globe mr-1"></i> ${recipe.cuisine || 'Universal'}
+                    <i class="fas fa-globe mr-1"></i> ${cuisine}
+                </span>
+                <span class="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full">
+                    <i class="fas fa-users mr-1"></i> ${servings} servings
                 </span>
                 ${healthBadge}
                 ${aiBadge}
@@ -2104,17 +2281,89 @@ function displayRecipe(recipe) {
             </div>
         </div>
         
+        ${recipe.prepTime && recipe.cookTime ? `
+        <div class="grid md:grid-cols-3 gap-4 mb-6">
+            <div class="bg-blue-50 p-4 rounded-lg text-center">
+                <i class="fas fa-cut text-blue-600 text-2xl mb-2"></i>
+                <p class="text-sm text-gray-600">Prep Time</p>
+                <p class="font-bold text-blue-800">${recipe.prepTime} min</p>
+            </div>
+            <div class="bg-orange-50 p-4 rounded-lg text-center">
+                <i class="fas fa-fire text-orange-600 text-2xl mb-2"></i>
+                <p class="text-sm text-gray-600">Cook Time</p>
+                <p class="font-bold text-orange-800">${recipe.cookTime} min</p>
+            </div>
+            <div class="bg-green-50 p-4 rounded-lg text-center">
+                <i class="fas fa-chart-line text-green-600 text-2xl mb-2"></i>
+                <p class="text-sm text-gray-600">Total Time</p>
+                <p class="font-bold text-green-800">${totalTime} min</p>
+            </div>
+        </div>
+        ` : ''}
+        
+        ${recipe.nutrition ? `
+        <div class="bg-gradient-to-r from-green-50 to-emerald-50 p-4 rounded-lg mb-6">
+            <h5 class="font-semibold text-green-800 mb-3">
+                <i class="fas fa-chart-pie mr-2"></i>Nutrition Per Serving
+            </h5>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                <div>
+                    <p class="text-2xl font-bold text-green-700">${recipe.nutrition.calories}</p>
+                    <p class="text-sm text-gray-600">Calories</p>
+                </div>
+                <div>
+                    <p class="text-2xl font-bold text-blue-600">${recipe.nutrition.protein}g</p>
+                    <p class="text-sm text-gray-600">Protein</p>
+                </div>
+                <div>
+                    <p class="text-2xl font-bold text-orange-600">${recipe.nutrition.carbs}g</p>
+                    <p class="text-sm text-gray-600">Carbs</p>
+                </div>
+                <div>
+                    <p class="text-2xl font-bold text-purple-600">${recipe.nutrition.fat}g</p>
+                    <p class="text-sm text-gray-600">Fat</p>
+                </div>
+            </div>
+        </div>
+        ` : ''}
+        
+        ${recipe.equipment ? `
+        <div class="bg-gray-50 p-4 rounded-lg mb-6">
+            <h5 class="font-semibold text-gray-800 mb-3">
+                <i class="fas fa-tools mr-2"></i>Equipment Needed
+            </h5>
+            <div class="flex flex-wrap gap-2">
+                ${recipe.equipment.map(item => `
+                    <span class="bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-sm">
+                        <i class="fas fa-check-circle mr-1"></i> ${item}
+                    </span>
+                `).join('')}
+            </div>
+        </div>
+        ` : ''}
+        
         <div class="mb-6">
             <h5 class="text-lg font-semibold mb-3 text-gray-800">
-                <i class="fas fa-list-ol mr-2 text-orange-600"></i>Ingredients
+                <i class="fas fa-shopping-basket mr-2 text-orange-600"></i>Ingredients
             </h5>
             <ul class="grid md:grid-cols-2 gap-2">
-                ${recipe.ingredients.map(ingredient => `
-                    <li class="flex items-center text-gray-700">
-                        <i class="fas fa-check text-green-500 mr-2"></i>
-                        ${ingredient}
-                    </li>
-                `).join('')}
+                ${recipe.ingredients.map(ingredient => {
+                    if (typeof ingredient === 'object') {
+                        return `
+                            <li class="flex items-center text-gray-700 bg-white p-2 rounded border">
+                                <i class="fas fa-check text-green-500 mr-2"></i>
+                                <span class="font-medium">${ingredient.amount} ${ingredient.unit}</span> ${ingredient.item}
+                            </li>
+                        `;
+                    } else {
+                        return `
+                            <li class="flex items-center text-gray-700 bg-white p-2 rounded border">
+                                <i class="fas fa-check text-green-500 mr-2"></i>
+                                ${ingredient}
+                            </li>
+                        `;
+                    }
+                }).join('')}
             </ul>
         </div>
         
@@ -2123,14 +2372,32 @@ function displayRecipe(recipe) {
                 <i class="fas fa-list-ol mr-2 text-orange-600"></i>Instructions
             </h5>
             <ol class="space-y-3">
-                ${recipe.instructions.map((instruction, index) => `
-                    <li class="flex items-start">
-                        <span class="bg-orange-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold mr-3 flex-shrink-0">
-                            ${index + 1}
-                        </span>
-                        <span class="text-gray-700">${instruction}</span>
-                    </li>
-                `).join('')}
+                ${recipe.instructions.map((instruction, index) => {
+                    if (typeof instruction === 'object') {
+                        return `
+                            <li class="flex items-start bg-white p-3 rounded border">
+                                <span class="bg-orange-600 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold mr-3 flex-shrink-0">
+                                    ${instruction.step}
+                                </span>
+                                <div class="flex-1">
+                                    <p class="text-gray-700">${instruction.action}</p>
+                                    ${instruction.time ? `<span class="text-sm text-gray-500 mt-1 block">
+                                        <i class="fas fa-clock mr-1"></i> ${instruction.time} min
+                                    </span>` : ''}
+                                </div>
+                            </li>
+                        `;
+                    } else {
+                        return `
+                            <li class="flex items-start bg-white p-3 rounded border">
+                                <span class="bg-orange-600 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold mr-3 flex-shrink-0">
+                                    ${index + 1}
+                                </span>
+                                <span class="text-gray-700">${instruction}</span>
+                            </li>
+                        `;
+                    }
+                }).join('')}
             </ol>
         </div>
         
@@ -2155,12 +2422,18 @@ function displayRecipe(recipe) {
         </div>
         ` : ''}
         
-        <div class="flex gap-4">
+        <div class="flex flex-wrap gap-3">
             <button onclick="saveRecipe('${recipe.name}')" class="bg-orange-600 text-white px-6 py-2 rounded-lg hover:bg-orange-700 transition-colors">
                 <i class="fas fa-bookmark mr-2"></i>Save Recipe
             </button>
             <button onclick="shareRecipe('${recipe.name}')" class="bg-gray-200 text-gray-800 px-6 py-2 rounded-lg hover:bg-gray-300 transition-colors">
                 <i class="fas fa-share mr-2"></i>Share
+            </button>
+            <button onclick="printRecipe()" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                <i class="fas fa-print mr-2"></i>Print
+            </button>
+            <button onclick="generateShoppingList('${recipe.name}')" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors">
+                <i class="fas fa-shopping-cart mr-2"></i>Shopping List
             </button>
             <button onclick="generateNewRecipe()" class="border border-orange-600 text-orange-600 px-6 py-2 rounded-lg hover:bg-orange-50 transition-colors">
                 <i class="fas fa-redo mr-2"></i>Generate Another
@@ -2399,6 +2672,246 @@ function generateNewRecipe() {
     document.getElementById('ingredients').focus();
 }
 
+// Print recipe functionality
+function printRecipe() {
+    const recipeContent = document.getElementById('recipe-content').innerHTML;
+    const printWindow = window.open('', '_blank');
+    
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Flavorly Recipe</title>
+            <style>
+                body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 20px; line-height: 1.6; }
+                .recipe-header { border-bottom: 2px solid #FF6B35; padding-bottom: 20px; margin-bottom: 30px; }
+                .recipe-title { font-size: 28px; color: #333; margin-bottom: 10px; }
+                .recipe-description { color: #666; font-size: 16px; }
+                .recipe-section { margin-bottom: 30px; }
+                .section-title { font-size: 20px; color: #FF6B35; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+                .ingredients { list-style: none; padding: 0; }
+                .ingredients li { margin-bottom: 8px; padding: 5px 0; border-bottom: 1px solid #f0f0f0; }
+                .instructions { list-style: none; padding: 0; counter-reset: step-counter; }
+                .instructions li { counter-increment: step-counter; margin-bottom: 15px; padding-left: 40px; position: relative; }
+                .instructions li::before { content: counter(step-counter); position: absolute; left: 0; top: 0; background: #FF6B35; color: white; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+                .tips { background: #fff8c5; padding: 15px; border-radius: 5px; border-left: 4px solid #FF6B35; }
+                .nutrition { background: #f0f8f0; padding: 15px; border-radius: 5px; }
+                .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #ccc; text-align: center; color: #666; font-size: 14px; }
+                @media print { body { margin: 0; } }
+            </style>
+        </head>
+        <body>
+            ${recipeContent}
+            <div class="footer">
+                <p>Generated with ❤️ by Flavorly - AI-Powered Recipe Generator</p>
+                <p>Visit us at: https://flavorly.app</p>
+            </div>
+        </body>
+        </html>
+    `);
+    
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
+    printWindow.close();
+    
+    showNotification('Recipe sent to printer!', 'success');
+}
+
+// Generate shopping list
+function generateShoppingList(recipeName) {
+    // Get current recipe data
+    const recipeContent = document.getElementById('recipe-content').innerHTML;
+    
+    // Extract ingredients from the current recipe
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = recipeContent;
+    
+    // Try multiple selectors to find ingredients
+    let ingredientElements = tempDiv.querySelectorAll('.fa-check').parentElement;
+    
+    // If that doesn't work, try other selectors
+    if (ingredientElements.length === 0) {
+        ingredientElements = tempDiv.querySelectorAll('li');
+    }
+    
+    // If still no ingredients, try to find them by text content
+    if (ingredientElements.length === 0) {
+        ingredientElements = Array.from(tempDiv.querySelectorAll('*')).filter(el => {
+            const text = el.textContent.trim();
+            return text.includes('cup') || text.includes('tbsp') || text.includes('tsp') || 
+                   text.includes('oz') || text.includes('lb') || text.includes('g') || 
+                   text.includes('kg') || text.includes('ml') || text.includes('l');
+        });
+    }
+    
+    const shoppingList = Array.from(ingredientElements).map(el => {
+        const text = el.textContent.trim();
+        // Clean up the text to get just the ingredient
+        return text.replace(/^✓\s*/, '').replace(/^\d+\s*(?:cup|tbsp|tsp|oz|lb|g|kg|ml|l)\s*/i, '');
+    }).filter(item => item && item.length > 2); // Filter out empty or very short items
+    
+    // If still no ingredients, create a fallback list
+    if (shoppingList.length === 0) {
+        shoppingList.push('Check recipe for ingredient list', 'Common pantry items', 'Fresh vegetables', 'Protein source');
+    }
+    
+    // Create shopping list modal
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center';
+    modal.id = 'shopping-list-modal';
+    modal.innerHTML = `
+        <div class="bg-white rounded-2xl p-8 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">
+                    <i class="fas fa-shopping-cart text-green-600 mr-2"></i>
+                    Shopping List
+                </h2>
+                <button onclick="closeShoppingListModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-700 mb-3">${recipeName}</h3>
+                <div class="bg-green-50 border border-green-200 p-4 rounded-lg">
+                    <p class="text-sm text-green-800">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        Check your pantry first! Only buy what you don't already have.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="space-y-4">
+                <div class="flex justify-between items-center mb-3">
+                    <h4 class="font-semibold text-gray-700">Ingredients Needed:</h4>
+                    <div class="flex gap-2">
+                        <button onclick="selectAllIngredients()" class="text-sm bg-gray-200 px-3 py-1 rounded hover:bg-gray-300">
+                            Select All
+                        </button>
+                        <button onclick="deselectAllIngredients()" class="text-sm bg-gray-200 px-3 py-1 rounded hover:bg-gray-300">
+                            Deselect All
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="space-y-2">
+                    ${shoppingList.map((ingredient, index) => `
+                        <label class="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer">
+                            <input type="checkbox" id="ingredient-${index}" class="mr-3 w-4 h-4 text-orange-600" checked>
+                            <span class="text-gray-700">${ingredient}</span>
+                        </label>
+                    `).join('')}
+                </div>
+            </div>
+            
+            <div class="flex gap-3 mt-6">
+                <button onclick="copyShoppingList()" class="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                    <i class="fas fa-copy mr-2"></i>Copy List
+                </button>
+                <button onclick="printShoppingList()" class="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
+                    <i class="fas fa-print mr-2"></i>Print List
+                </button>
+                <button onclick="emailShoppingList()" class="flex-1 bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors">
+                    <i class="fas fa-envelope mr-2"></i>Email List
+                </button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+}
+
+function closeShoppingListModal() {
+    const modal = document.getElementById('shopping-list-modal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+function selectAllIngredients() {
+    const checkboxes = document.querySelectorAll('#shopping-list-modal input[type="checkbox"]');
+    checkboxes.forEach(cb => cb.checked = true);
+}
+
+function deselectAllIngredients() {
+    const checkboxes = document.querySelectorAll('#shopping-list-modal input[type="checkbox"]');
+    checkboxes.forEach(cb => cb.checked = false);
+}
+
+function copyShoppingList() {
+    const checkedItems = document.querySelectorAll('#shopping-list-modal input[type="checkbox"]:checked');
+    const shoppingList = Array.from(checkedItems).map(item => {
+        const label = item.parentElement.querySelector('span').textContent;
+        return `• ${label}`;
+    }).join('\n');
+    
+    const fullList = `Flavorly Shopping List\n${'='.repeat(30)}\n\n${shoppingList}\n\nGenerated with ❤️ by Flavorly`;
+    
+    navigator.clipboard.writeText(fullList).then(() => {
+        showNotification('Shopping list copied to clipboard!', 'success');
+    }).catch(() => {
+        showNotification('Failed to copy list', 'error');
+    });
+}
+
+function printShoppingList() {
+    const checkedItems = document.querySelectorAll('#shopping-list-modal input[type="checkbox"]:checked');
+    const shoppingList = Array.from(checkedItems).map(item => {
+        const label = item.parentElement.querySelector('span').textContent;
+        return `• ${label}`;
+    }).join('\n');
+    
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Flavorly Shopping List</title>
+            <style>
+                body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 40px; line-height: 1.8; }
+                h1 { color: #FF6B35; border-bottom: 2px solid #FF6B35; padding-bottom: 10px; }
+                .list-item { margin: 8px 0; padding: 5px 0; border-bottom: 1px solid #eee; }
+                .footer { margin-top: 40px; text-align: center; color: #666; font-size: 14px; }
+            </style>
+        </head>
+        <body>
+            <h1>🛒 Flavorly Shopping List</h1>
+            <div class="list-items">
+                ${shoppingList.split('\n').map(item => `<div class="list-item">${item}</div>`).join('')}
+            </div>
+            <div class="footer">
+                <p>Generated with ❤️ by Flavorly - AI-Powered Recipe Generator</p>
+                <p>Visit us at: https://flavorly.app</p>
+            </div>
+        </body>
+        </html>
+    `);
+    
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
+    printWindow.close();
+    
+    showNotification('Shopping list sent to printer!', 'success');
+}
+
+function emailShoppingList() {
+    const checkedItems = document.querySelectorAll('#shopping-list-modal input[type="checkbox"]:checked');
+    const shoppingList = Array.from(checkedItems).map(item => {
+        const label = item.parentElement.querySelector('span').textContent;
+        return `• ${label}`;
+    }).join('\n');
+    
+    const subject = 'Flavorly Shopping List';
+    const body = `Here's your shopping list from Flavorly:\n\n${shoppingList}\n\nGenerated with ❤️ by Flavorly - AI-Powered Recipe Generator\nVisit us at: https://flavorly.app`;
+    
+    const mailtoLink = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    window.open(mailtoLink);
+    
+    showNotification('Opening your email client...', 'info');
+}
+
 function showNotification(message, type) {
     // Create notification element
     const notification = document.createElement('div');
@@ -2461,6 +2974,27 @@ function toggleMobileMenu() {
     }
 }
 
+// Check for password reset requests
+function checkPasswordReset() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const resetToken = urlParams.get('reset');
+    const email = urlParams.get('email');
+    
+    if (resetToken && email) {
+        // Verify reset token
+        const tokenData = JSON.parse(localStorage.getItem('passwordResetTokens') || '{}');
+        const storedToken = tokenData[email];
+        
+        if (storedToken && storedToken.token === resetToken && new Date(storedToken.expiresAt) > new Date()) {
+            showPasswordResetModal(email, resetToken);
+        } else {
+            showNotification('Invalid or expired reset link', 'error');
+            // Clean URL
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+    }
+}
+
 // Initialize page
 document.addEventListener('DOMContentLoaded', function() {
     initAuth(); // Initialize authentication system
@@ -2476,10 +3010,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Handle navigation buttons (case-insensitive)
                 if (buttonText.toLowerCase() === 'features') {
                     e.preventDefault();
-                    document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });
+                    const features = document.getElementById('features');
+                    if (features) features.scrollIntoView({ behavior: 'smooth' });
                 } else if (buttonText.toLowerCase() === 'how it works') {
                     e.preventDefault();
-                    document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' });
+                    const howItWorks = document.getElementById('how-it-works');
+                    if (howItWorks) howItWorks.scrollIntoView({ behavior: 'smooth' });
                 } else if (buttonText.toLowerCase() === 'my recipes' && currentUser) {
                     e.preventDefault();
                     showNotification('My Recipes feature coming soon!', 'info');
