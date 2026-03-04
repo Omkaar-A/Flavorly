@@ -155,4 +155,4 @@ For issues or questions:
 
 ## 📄 License
 
-© 2024 Flavorly. All rights reserved.
+© 2026 Flavorly. All rights reserved.
