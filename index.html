@@ -126,8 +126,8 @@
                     </div>
                 </div>
                 <div class="flex items-center space-x-4">
-                    <button class="text-gray-600 hover:text-orange-600 transition-colors">Features</button>
-                    <button class="text-gray-600 hover:text-orange-600 transition-colors">How it Works</button>
+                    <button onclick="document.getElementById('features')?.scrollIntoView({behavior: 'smooth'})" class="text-gray-600 hover:text-orange-600 transition-colors">Features</button>
+                    <button onclick="document.getElementById('how-it-works')?.scrollIntoView({behavior: 'smooth'})" class="text-gray-600 hover:text-orange-600 transition-colors">How it Works</button>
                     <button id="install-btn" class="hidden bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center">
                         <i class="fas fa-download mr-2"></i>
                         Install App
@@ -178,7 +178,7 @@
                         <button onclick="showRecipeGenerator()" class="bg-white text-orange-600 px-8 py-4 rounded-lg font-semibold hover:bg-gray-100 transition-all transform hover:scale-105 shadow-lg">
                             <i class="fas fa-magic mr-2"></i>Create Your Recipe Now
                         </button>
-                        <button class="border-2 border-white text-white px-8 py-4 rounded-lg font-semibold hover:bg-white hover:text-orange-600 transition-all transform hover:scale-105">
+                        <button onclick="document.getElementById('how-it-works')?.scrollIntoView({behavior: 'smooth'})" class="border-2 border-white text-white px-8 py-4 rounded-lg font-semibold hover:bg-white hover:text-orange-600 transition-all transform hover:scale-105">
                             <i class="fas fa-play-circle mr-2"></i>Watch How It Works
                         </button>
                     </div>
@@ -532,7 +532,7 @@
                 <button onclick="showRecipeGenerator()" class="bg-white text-orange-600 px-8 py-4 rounded-lg font-semibold hover:bg-gray-100 transition-all transform hover:scale-105 shadow-xl">
                     <i class="fas fa-rocket mr-2"></i>Start Cooking Now - Free!
                 </button>
-                <button class="border-2 border-white text-white px-8 py-4 rounded-lg font-semibold hover:bg-white hover:text-orange-600 transition-all transform hover:scale-105">
+                <button onclick="document.getElementById('install-btn')?.click() || alert('Click the Install App button in the navigation bar!')" class="border-2 border-white text-white px-8 py-4 rounded-lg font-semibold hover:bg-white hover:text-orange-600 transition-all transform hover:scale-105">
                     <i class="fas fa-mobile-alt mr-2"></i>Get the App
                 </button>
             </div>
