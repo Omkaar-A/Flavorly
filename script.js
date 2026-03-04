@@ -598,10 +598,10 @@ function closeSudoModal() {
     }
 }
 
-// GitHub-Style Email Verification System (using SendGrid - GitHub's choice)
+// GitHub-Style Email Verification System (using Twilio SendGrid - Twilio's platform)
 const EMAIL_VERIFICATION = {
-    // Email service configuration (SendGrid - GitHub's email provider)
-    API_KEY: '', // Will be injected from GitHub Secrets (SENDGRID_API_KEY)
+    // Email service configuration (Twilio SendGrid - GitHub's choice, now on Twilio platform)
+    API_KEY: '', // Will be injected from GitHub Secrets (TWILIO_SENDGRID_API_KEY)
     FROM_EMAIL: 'noreply@flavorly.app',
     FROM_NAME: 'Flavorly',
     BASE_URL: window.location.origin,

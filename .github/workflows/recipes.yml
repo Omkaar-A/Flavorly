@@ -27,14 +27,14 @@ jobs:
     - name: Add API Keys
       env:
         GEMMA_API_KEY: ${{ secrets.GEMMA_API_KEY }}
-        SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
+        TWILIO_SENDGRID_API_KEY: ${{ secrets.TWILIO_SENDGRID_API_KEY }}
       run: |
         # Replace environment variables with actual secret values
         sed -i "s/gemma/gemma-1.1-7b-it/g" script.js
         sed -i "s/v1beta/v1/g" script.js
         sed -i "s/apiKey: '', \/\/ GitHub secret/apiKey: '$GEMMA_API_KEY', \/\/ GitHub secret/g" script.js
-        sed -i "s/API_KEY: '', \/\/ Will be injected/API_KEY: '$SENDGRID_API_KEY', \/\/ Injected/g" script.js
-        echo "✅ API keys added - Using SendGrid for emails!"
+        sed -i "s/API_KEY: '', \/\/ Will be injected/API_KEY: '$TWILIO_SENDGRID_API_KEY', \/\/ Injected/g" script.js
+        echo "✅ API keys added - Using Twilio SendGrid for emails!"
         
     - name: Upload artifact
       uses: actions/upload-pages-artifact@v3
